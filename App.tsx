@@ -18,25 +18,26 @@ const GEMINI_API_KEY = process.env.API_KEY || 'AIzaSyChe9wkjloCxBBnsaYNCMLPQQXU6
 
 // --- "THE VAULT": MEMÓRIA DE SISTEMA (FALLBACK/DEFAULT) ---
 const DEFAULT_SYSTEM_MEMORY = {
-    ARCHITECT_PROTOCOL: `
-      CRITICAL SYSTEM DIRECTIVES (NON-NEGOTIABLE):
-      1. STRUCTURAL LOCK: EXISTING WINDOWS AND DOORS ARE IMMUTABLE.
-      2. SOLID WALL RULE: NEVER CREATE OPENINGS IN SOLID WALLS. WALLS ARE CONCRETE.
-      3. BLANK WALL STRATEGY: IF A WALL IS BLANK, COVER IT WITH FLUTED WOOD PANELS OR STONE. DO NOT LEAVE IT EMPTY.
+	    ARCHITECT_PROTOCOL: `
+	      CRITICAL SYSTEM DIRECTIVES (NON-NEGOTIABLE):
+	      1. STRUCTURAL LOCK: Existing walls, ceiling height, floor plan, doors, windows, columns, beams, stairs and fixed plumbing locations are immutable.
+	      2. NO STRUCTURAL EDITS: Never create, remove, move, widen or close openings, windows, doors, walls, columns or stairs.
+	      3. COSMETIC FREEDOM: You may change wall colors, wallpaper, paint finishes, decorative cladding, movable furniture, rugs, curtains, art, mirrors, plants and special lighting.
+	      4. BLANK WALL STRATEGY: If a wall is blank, improve it cosmetically with paint, wallpaper, art, lighting, removable panels or decor. Do not create architectural openings.
       
       MANDATORY 2025 LUXURY SPECS:
       - LIGHTING: Magnetic Track Systems (Trilho Magnético), Linear LED Profiles (3000K). NO central simple bulbs.
       - MATERIALS: Fluted Wood (Ripado), Natural Stone (Travertine/Calacatta), Matte Lacquer, Bronze Glass.
       - FURNITURE: Floor-to-ceiling custom joinery. High-end Italian design.
     `,
-    RENDERER_PROTOCOL: `
-      VISUAL GENERATION HARD CONSTRAINTS:
-      1. PRESERVE GEOMETRY: SOLID WALLS MUST REMAIN SOLID OPAQUE SURFACES.
-      2. ANTI-WINDOW HALLUCINATION: TREAT SOLID WALLS AS "BLOCKED ZONES". COVER THEM WITH WOOD OR STONE, NEVER GLASS.
-      3. PRESERVE APERTURES: Do not remove or move existing windows.
-      4. TEXTURE QUALITY: 8K Photorealism.
-      5. LIGHTING PHYSICS: Warm (3000K) architectural lighting.
-    `
+	    RENDERER_PROTOCOL: `
+	      VISUAL GENERATION HARD CONSTRAINTS:
+	      1. PRESERVE GEOMETRY: Keep the same room shell, wall positions, floor plan, ceiling, windows, doors, columns, stairs and fixed openings.
+	      2. ANTI-HALLUCINATION: Do not add new windows, doors, arches, balconies, fireplaces, skylights or exterior views where they do not already exist.
+	      3. ALLOWED CHANGES: Change wall colors, wallpaper, paint, removable cladding, lighting fixtures/effects, furniture, textiles, rugs, decor and accessories.
+	      4. TEXTURE QUALITY: 8K Photorealism.
+	      5. LIGHTING PHYSICS: Use warm layered lighting, accent lighting, wall washers, LED strips, pendants, sconces or lamps when appropriate.
+	    `
 };
 
 // --- INICIALIZAÇÃO DE SERVIÇOS ---
@@ -816,12 +817,13 @@ export default function App() {
         ${selectedRoomId === 'bedroom_kids' ? `Kids Config: Age ${childAge}, Theme ${childTheme}, Gender ${childGender}.` : ''}
         ${overrideMaterial ? `MANDATORY MATERIAL OVERRIDE: All furniture and joinery MUST USE: ${overrideMaterial}.` : ''}
         
-        INSTRUCTIONS:
-        1. ANALYZE STRUCTURE: Identify solid walls. IF A WALL IS BLANK, YOU MUST PROPOSE COVERING IT WITH WOOD OR STONE.
-        2. DO NOT LEAVE WALLS BLANK.
-	        3. REDESIGN INTERIOR: Apply a completely new, sophisticated layout.
-	        4. WAYFAIR PROCUREMENT LOCK: The design must be executable with furniture, lighting, rugs, wall decor, storage, textiles and decorative items that can be sourced on Wayfair.com.
-	        5. Do not depend on custom-only or unbuyable pieces unless they are architectural finishes already present in the room.
+	        INSTRUCTIONS:
+	        1. ANALYZE STRUCTURE: Preserve the exact room shell. Do not change walls, windows, doors, columns, stairs, ceiling geometry or fixed openings.
+	        2. COSMETIC DESIGN ONLY: You may change wall colors, wallpaper, paint effects, decorative panels, movable furniture, rugs, curtains, art, mirrors, plants and special lighting.
+	        3. LIGHTING UPGRADE: Add sophisticated lighting only as visible fixtures or lighting effects, not as structural changes.
+	        4. REDESIGN INTERIOR: Apply a new, sophisticated composition without changing the architecture of the room.
+	        5. WAYFAIR PROCUREMENT LOCK: The design must be executable with furniture, lighting, rugs, wall decor, storage, textiles and decorative items that can be sourced on Wayfair.com.
+	        6. Do not depend on custom-only or unbuyable pieces unless they are non-structural finishes already present in the room.
 	        
 	        Output only the raw prompt text.
 	      `;
@@ -841,8 +843,9 @@ export default function App() {
       const renderPrompt = `
         ${systemMemory.RENDERER_PROTOCOL}
 
-        TASK: REDESIGN INTERIOR LAYOUT with 2025 LUXURY TRENDS.
-        INPUT IMAGE: This is the IMMUTABLE SHELL.
+	        TASK: REDESIGN INTERIOR LAYOUT with 2025 LUXURY TRENDS.
+	        INPUT IMAGE: This is the IMMUTABLE SHELL.
+	        STRUCTURAL WARNING: Keep all existing walls, doors, windows, ceiling shape, floor plan, columns, stairs and fixed openings exactly where they are. Only cosmetic and movable-item changes are allowed.
         
         NEW DESIGN INSTRUCTION:
         ${enhancedDescription}
