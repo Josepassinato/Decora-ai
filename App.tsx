@@ -494,7 +494,13 @@ const Tooltip: FC<{ text: string; children: ReactNode }> = ({ text, children }) 
   </div>
 );
 
-const ComparisonSlider: FC<{ before: string; after: string }> = ({ before, after }) => {
+const ComparisonSlider: FC<{
+  before: string;
+  after: string;
+  className?: string;
+  beforeLabel?: string;
+  afterLabel?: string;
+}> = ({ before, after, className = 'h-[400px] md:h-[600px] border-4', beforeLabel = 'Antes', afterLabel = 'Depois' }) => {
   const [sliderPosition, setSliderPosition] = useState(50);
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
     const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
@@ -504,18 +510,22 @@ const ComparisonSlider: FC<{ before: string; after: string }> = ({ before, after
 
   return (
     <div 
-      className="relative w-full h-[400px] md:h-[600px] overflow-hidden rounded-xl cursor-ew-resize select-none border-4 border-[#eadff2] shadow-2xl group"
+      className={`relative w-full overflow-hidden rounded-xl cursor-ew-resize select-none border-[#eadff2] shadow-2xl group ${className}`}
       onMouseMove={handleMove} onTouchMove={handleMove}
     >
       <img src={after} className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute inset-0 w-full h-full overflow-hidden border-r-2 border-white" style={{ width: `${sliderPosition}%` }}>
         <img src={before} className="absolute inset-0 w-full h-full object-cover" />
       </div>
-      <div className="absolute top-1/2 -mt-4 -ml-4 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center" style={{ left: `${sliderPosition}%` }}>
-        <div className="w-1 h-4 bg-[#f3e8ff] rounded"></div>
+      <div className="absolute top-0 bottom-0 w-px bg-white/90 shadow-[0_0_18px_rgba(255,255,255,0.9)]" style={{ left: `${sliderPosition}%` }}></div>
+      <div className="absolute top-1/2 -mt-5 -ml-5 w-10 h-10 bg-white rounded-full shadow-xl flex items-center justify-center border border-[#eadff2]" style={{ left: `${sliderPosition}%` }}>
+        <div className="flex gap-1 text-[#7F187F] text-xs font-black">
+          <span>&lt;</span>
+          <span>&gt;</span>
+        </div>
       </div>
-      <div className="absolute bottom-4 left-4 bg-black/60 text-white px-2 py-1 rounded text-xs">Antes</div>
-      <div className="absolute bottom-4 right-4 bg-black/60 text-white px-2 py-1 rounded text-xs">Depois</div>
+      <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs uppercase tracking-wide font-bold">{beforeLabel}</div>
+      <div className="absolute bottom-4 right-4 bg-[#7F187F]/90 text-white px-3 py-1 rounded-full text-xs uppercase tracking-wide font-bold">{afterLabel}</div>
     </div>
   );
 };
@@ -1101,17 +1111,14 @@ export default function App() {
                                 ))}
                             </div>
 
-                            <div className="hidden sm:block bg-white border border-[#eadff2] rounded-2xl overflow-hidden shadow-xl">
-                                <div className="grid grid-cols-2">
-                                    <div className="relative h-56 md:h-80 overflow-hidden">
-                                        <img src={DECORE_DEMO_BEFORE} alt={t.upload.demoBefore} className="w-full h-full object-cover" />
-                                        <div className="absolute bottom-3 left-3 rounded-full bg-black/60 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">{t.upload.demoBefore}</div>
-                                    </div>
-                                    <div className="relative h-56 md:h-80 overflow-hidden">
-                                        <img src={DECORE_DEMO_AFTER} alt={t.upload.demoAfter} className="w-full h-full object-cover" />
-                                        <div className="absolute bottom-3 left-3 rounded-full bg-[#7F187F]/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">{t.upload.demoAfter}</div>
-                                    </div>
-                                </div>
+                            <div className="hidden sm:block bg-white border border-[#eadff2] rounded-2xl overflow-hidden shadow-xl p-2">
+                                <ComparisonSlider
+                                    before={DECORE_DEMO_BEFORE}
+                                    after={DECORE_DEMO_AFTER}
+                                    className="h-64 md:h-80 border"
+                                    beforeLabel={t.upload.demoBefore}
+                                    afterLabel={t.upload.demoAfter}
+                                />
                             </div>
                         </section>
 
