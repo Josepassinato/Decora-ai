@@ -95,6 +95,8 @@ type WayfairBudgetItem = {
 
 const WAYFAIR_BASE_URL = 'https://www.wayfair.com';
 const WAYFAIR_SEARCH_URL = `${WAYFAIR_BASE_URL}/keyword.php`;
+const DECORE_DEMO_BEFORE = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4f9d?auto=format&fit=crop&w=900&q=80';
+const DECORE_DEMO_AFTER = 'https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&w=900&q=80';
 
 const buildWayfairSearchUrl = (term: string) =>
   `${WAYFAIR_SEARCH_URL}?keyword=${encodeURIComponent(term.trim() || 'home decor')}`;
@@ -222,8 +224,8 @@ Return ONLY valid JSON:
 const TRANSLATIONS = {
   pt: {
     nav: { store: "Loja", login: "Entrar", credits: "créditos" },
-    steps: { upload: "Upload da Imagem", room: "Tipo de Ambiente", style: "Estilo de Decoração" },
-    upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera" },
+    steps: { upload: "Foto do ambiente", room: "Cômodo", style: "Estilo", project: "Projeto e orçamento" },
+    upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera", heroEyebrow: "Design com IA + lista de compra", heroTitle: "Redesenhe seu ambiente com peças reais para comprar", heroSubtitle: "A Decore AI transforma uma foto em uma proposta visual, preserva a estrutura do espaço e monta um orçamento item por item com produtos pesquisáveis na Wayfair.", featureDesign: "Imagem de encantamento", featureBudget: "Orçamento comprável", featureStructure: "Sem mexer na estrutura", demoBefore: "ambiente original", demoAfter: "visão projetada", procurementNote: "a proposta final separa móveis, iluminação, tapetes e decoração em uma lista de compra validável." },
     roomSelect: { title: "Qual ambiente vamos transformar?", residential: "Residencial", commercial: "Comercial & Corporativo", next: "Próximo", customLabel: "Descreva seu negócio:", customPlaceholder: "Ex: Barbearia Vintage..." },
     kidsConfig: { title: "Configuração do Quarto Infantil", age: "Idade", theme: "Tema", themePlaceholder: "Ex: Dinossauros...", gender: "Gênero", select: "Selecione...", boy: "Menino", girl: "Menina", neutral: "Neutro" },
     styleSelect: { title: "Escolha o estilo ideal", cost: "Custo", generate: "Gerar Transformação" },
@@ -244,8 +246,8 @@ const TRANSLATIONS = {
   },
   en: {
     nav: { store: "Store", login: "Login", credits: "credits" },
-    steps: { upload: "Upload Image", room: "Room Type", style: "Decor Style" },
-    upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera" },
+    steps: { upload: "Room photo", room: "Room", style: "Style", project: "Project and budget" },
+    upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera", heroEyebrow: "AI design + shopping list", heroTitle: "Redesign your room with real products to buy", heroSubtitle: "Decore AI turns a photo into a visual proposal, preserves the room structure and builds an item-by-item budget with searchable Wayfair products.", featureDesign: "Visual transformation", featureBudget: "Buyable budget", featureStructure: "No structural edits", demoBefore: "original room", demoAfter: "projected vision", procurementNote: "the final proposal separates furniture, lighting, rugs and decor into a validated shopping list." },
     roomSelect: { title: "Which room are we transforming?", residential: "Residential", commercial: "Commercial", next: "Next", customLabel: "Describe business:", customPlaceholder: "Ex: Vintage Barbershop..." },
     kidsConfig: { title: "Kids Room Config", age: "Age", theme: "Theme", themePlaceholder: "Ex: Dinosaurs...", gender: "Gender", select: "Select...", boy: "Boy", girl: "Girl", neutral: "Neutral" },
     styleSelect: { title: "Choose ideal style", cost: "Cost", generate: "Generate" },
@@ -266,8 +268,8 @@ const TRANSLATIONS = {
   },
   es: {
     nav: { store: "Tienda", login: "Entrar", credits: "créditos" },
-    steps: { upload: "Subir Imagen", room: "Tipo de Ambiente", style: "Estilo" },
-    upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara" },
+    steps: { upload: "Foto del ambiente", room: "Ambiente", style: "Estilo", project: "Proyecto y presupuesto" },
+    upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara", heroEyebrow: "Diseño con IA + lista de compra", heroTitle: "Rediseña tu ambiente con productos reales para comprar", heroSubtitle: "Decore AI transforma una foto en una propuesta visual, preserva la estructura y crea un presupuesto por ítems con productos buscables en Wayfair.", featureDesign: "Imagen de impacto", featureBudget: "Presupuesto comprable", featureStructure: "Sin cambios estructurales", demoBefore: "ambiente original", demoAfter: "visión proyectada", procurementNote: "la propuesta final separa muebles, iluminación, alfombras y decoración en una lista de compra validable." },
     roomSelect: { title: "¿Qué ambiente transformamos?", residential: "Residencial", commercial: "Comercial", next: "Siguiente", customLabel: "Describe tu negocio:", customPlaceholder: "Ej: Barbería Vintage..." },
     kidsConfig: { title: "Config Habitación Infantil", age: "Edad", theme: "Tema", themePlaceholder: "Ej: Dinosaurios...", gender: "Género", select: "Seleccione...", boy: "Niño", girl: "Niña", neutral: "Neutro" },
     styleSelect: { title: "Elige estilo ideal", cost: "Costo", generate: "Generar" },
@@ -1028,16 +1030,17 @@ export default function App() {
       <header className="bg-white/90 backdrop-blur border-b border-[#eadff2] sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="bg-[#f3e8ff] p-2 rounded border border-[#dac7e5]"><Hexagon className="text-[#7F187F] w-5 h-5"/></div>
-            Decore AI
+            <div className="bg-[#7F187F] p-2 rounded border border-[#651365] shadow-sm"><Sparkles className="text-white w-5 h-5"/></div>
+            <div className="leading-tight">
+                <div>Decore AI</div>
+                <div className="hidden sm:block text-[10px] uppercase tracking-wide text-[#85758a] font-bold">Visual design + shopping list</div>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-             {/* DB STATUS LED */}
+          <div className="flex items-center gap-3">
              <Tooltip text={`Config: ${configSource === 'mongo' ? 'MongoDB' : 'Fallback local'}`}>
-                <div className="flex items-center gap-2 text-xs font-mono mr-2 cursor-help transition-all hover:bg-[#f3e8ff] p-2 rounded">
-                    {configSource === 'mongo' ? <Database className="w-3 h-3 text-blue-400"/> : <HardDrive className="w-3 h-3 text-[#85758a]"/>}
+                <div className="hidden md:flex items-center gap-2 text-xs font-mono cursor-help transition-all hover:bg-[#f3e8ff] p-2 rounded">
+                    {configSource === 'mongo' ? <Database className="w-3 h-3 text-[#7F187F]"/> : <HardDrive className="w-3 h-3 text-[#85758a]"/>}
                     <div className={`w-2 h-2 rounded-full ${dbStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : dbStatus === 'checking' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`}></div>
-                    <span className="hidden md:inline text-[#85758a] uppercase">{dbStatus === 'connected' ? 'Online' : dbStatus === 'checking' ? 'Connecting...' : 'Offline'}</span>
                 </div>
              </Tooltip>
 
@@ -1048,7 +1051,7 @@ export default function App() {
              </div>
              <div onClick={() => setShowPaywall(true)} className="flex items-center bg-white rounded-full px-3 py-1 border border-[#eadff2] cursor-pointer hover:bg-[#f3e8ff]">
                  <Coins className="w-4 h-4 text-[#7F187F] mr-2"/>
-                 <span className="font-bold text-sm">{credits}</span>
+                 <span className="font-bold text-sm">{credits}<span className="hidden sm:inline text-[#85758a] ml-1">cr</span></span>
              </div>
           </div>
         </div>
@@ -1061,7 +1064,7 @@ export default function App() {
            <Step number={2} title={t.steps.room} isActive={currentStep===2} isCompleted={currentStep>2} />
            <Step number={3} title={t.steps.style} isActive={currentStep===3} isCompleted={currentStep>3} />
            <div className="mt-8">
-               <Step number={4} title={t.results.authorized} isActive={isApproved} isCompleted={isApproved} />
+               <Step number={4} title={t.steps.project} isActive={currentStep===4} isCompleted={isApproved} />
            </div>
         </div>
 
@@ -1070,23 +1073,71 @@ export default function App() {
            {isGenerating ? <Spinner message={loadingMessage} /> : (
                <>
                 {currentStep === 1 && (
-                    <div className="bg-white rounded-2xl border-2 border-dashed border-[#eadff2] p-8 md:p-12 text-center hover:border-[#7F187F] transition-colors group">
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload}/>
-                        <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleImageUpload}/>
-                        <div className="w-20 h-20 bg-[#f3e8ff] rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform"><UploadCloud size={40} className="text-[#85758a] group-hover:text-[#7F187F]"/></div>
-                        <h2 className="text-2xl font-bold mb-2">{t.upload.title}</h2>
-                        <p className="text-[#6f6075] mb-8">{t.upload.subtitle}</p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                            <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#7F187F] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#651365] transition-colors shadow-lg">
-                                <ImagePlus className="w-5 h-5" />
-                                {t.upload.gallery}
-                            </button>
-                            <button type="button" onClick={() => cameraInputRef.current?.click()} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#f3e8ff] text-[#7F187F] px-6 py-3 rounded-xl font-bold hover:bg-[#eadff2] transition-colors border border-[#dac7e5]">
-                                <Camera className="w-5 h-5" />
-                                {t.upload.camera}
-                            </button>
+                    <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr] gap-6 animate-fade-in">
+                        <section className="space-y-5">
+                            <div>
+                                <div className="inline-flex items-center gap-2 rounded-full bg-white border border-[#eadff2] px-3 py-1 text-xs font-black uppercase tracking-wide text-[#7F187F] shadow-sm">
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                    {t.upload.heroEyebrow}
+                                </div>
+                                <h1 className="mt-4 text-3xl md:text-5xl font-black leading-tight text-[#2f1a35]">
+                                    {t.upload.heroTitle}
+                                </h1>
+                                <p className="mt-4 text-base md:text-lg text-[#6f6075] leading-relaxed max-w-2xl">
+                                    {t.upload.heroSubtitle}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {[
+                                    [ImagePlus, t.upload.featureDesign],
+                                    [ShoppingBag, t.upload.featureBudget],
+                                    [ShieldCheck, t.upload.featureStructure],
+                                ].map(([Icon, label]: any) => (
+                                    <div key={label} className="bg-white border border-[#eadff2] rounded-lg px-4 py-3 flex items-center gap-3 shadow-sm">
+                                        <Icon className="w-5 h-5 text-[#7F187F] shrink-0" />
+                                        <span className="text-sm font-bold text-[#4b3650]">{label}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="hidden sm:block bg-white border border-[#eadff2] rounded-2xl overflow-hidden shadow-xl">
+                                <div className="grid grid-cols-2">
+                                    <div className="relative h-56 md:h-80 overflow-hidden">
+                                        <img src={DECORE_DEMO_BEFORE} alt={t.upload.demoBefore} className="w-full h-full object-cover" />
+                                        <div className="absolute bottom-3 left-3 rounded-full bg-black/60 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">{t.upload.demoBefore}</div>
+                                    </div>
+                                    <div className="relative h-56 md:h-80 overflow-hidden">
+                                        <img src={DECORE_DEMO_AFTER} alt={t.upload.demoAfter} className="w-full h-full object-cover" />
+                                        <div className="absolute bottom-3 left-3 rounded-full bg-[#7F187F]/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">{t.upload.demoAfter}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="bg-white rounded-2xl border border-[#eadff2] p-6 md:p-8 shadow-xl self-start">
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload}/>
+                            <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleImageUpload}/>
+                            <div className="w-16 h-16 bg-[#f3e8ff] rounded-xl flex items-center justify-center mb-6">
+                                <UploadCloud size={32} className="text-[#7F187F]"/>
+                            </div>
+                            <h2 className="text-2xl md:text-3xl font-black mb-3 text-[#2f1a35]">{t.upload.title}</h2>
+                            <p className="text-[#6f6075] mb-7 leading-relaxed">{t.upload.subtitle}</p>
+                            <div className="flex flex-col gap-3">
+                                <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full inline-flex items-center justify-center gap-2 bg-[#7F187F] text-white px-6 py-4 rounded-xl font-black hover:bg-[#651365] transition-colors shadow-lg">
+                                    <ImagePlus className="w-5 h-5" />
+                                    {t.upload.gallery}
+                                </button>
+                                <button type="button" onClick={() => cameraInputRef.current?.click()} className="w-full inline-flex items-center justify-center gap-2 bg-[#f3e8ff] text-[#7F187F] px-6 py-4 rounded-xl font-black hover:bg-[#eadff2] transition-colors border border-[#dac7e5]">
+                                    <Camera className="w-5 h-5" />
+                                    {t.upload.camera}
+                                </button>
+                            </div>
+                            <div className="mt-6 rounded-lg bg-[#f7f3fb] border border-[#eadff2] p-4 text-sm text-[#6f6075] leading-relaxed">
+                                <span className="font-black text-[#2f1a35]">Wayfair-ready:</span> {t.upload.procurementNote}
+                            </div>
+                        </section>
                         </div>
-                    </div>
                 )}
 
                 {currentStep === 2 && (
