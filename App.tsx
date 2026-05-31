@@ -1111,11 +1111,11 @@ export default function App() {
                                 ))}
                             </div>
 
-                            <div className="hidden sm:block bg-white border border-[#eadff2] rounded-2xl overflow-hidden shadow-xl p-2">
+                            <div className="block bg-white border border-[#eadff2] rounded-2xl overflow-hidden shadow-xl p-2">
                                 <ComparisonSlider
                                     before={DECORE_DEMO_BEFORE}
                                     after={DECORE_DEMO_AFTER}
-                                    className="h-64 md:h-80 border"
+                                    className="h-48 sm:h-64 md:h-80 border"
                                     beforeLabel={t.upload.demoBefore}
                                     afterLabel={t.upload.demoAfter}
                                 />
