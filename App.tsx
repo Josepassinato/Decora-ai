@@ -87,6 +87,125 @@ const resizeImage = (base64Str: string, maxWidth = 1536, maxHeight = 1536): Prom
 
 type Language = 'pt' | 'en' | 'es';
 
+type WayfairBudgetItem = {
+  name: string;
+  category: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  url: string;
+  validation: 'direct_product' | 'search_result';
+  note?: string;
+};
+
+const WAYFAIR_BASE_URL = 'https://www.wayfair.com';
+const WAYFAIR_SEARCH_URL = `${WAYFAIR_BASE_URL}/keyword.php`;
+
+const buildWayfairSearchUrl = (term: string) =>
+  `${WAYFAIR_SEARCH_URL}?keyword=${encodeURIComponent(term.trim() || 'home decor')}`;
+
+const isWayfairUrl = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === 'wayfair.com' || parsed.hostname.endsWith('.wayfair.com');
+  } catch {
+    return false;
+  }
+};
+
+const toMoney = (value: number) =>
+  value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+const normalizeWayfairItem = (raw: any): WayfairBudgetItem | null => {
+  if (!raw || typeof raw !== 'object') return null;
+  const name = String(raw.name || '').trim();
+  const category = String(raw.category || 'Decor').trim();
+  const quantity = Math.max(1, Number(raw.quantity || 1));
+  const unitPrice = Math.max(0, Number(raw.unitPrice || raw.price || 0));
+  const proposedUrl = String(raw.url || '').trim();
+  const url = isWayfairUrl(proposedUrl) ? proposedUrl : buildWayfairSearchUrl(name || category);
+  if (!name) return null;
+  return {
+    name,
+    category,
+    quantity,
+    unitPrice,
+    totalPrice: Number((unitPrice * quantity).toFixed(2)),
+    url,
+    validation: proposedUrl && isWayfairUrl(proposedUrl) ? 'direct_product' : 'search_result',
+    note: String(raw.note || '').trim(),
+  };
+};
+
+const extractJsonObject = (text: string) => {
+  const fenced = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
+  if (fenced?.[1]) return fenced[1];
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start >= 0 && end > start) return text.slice(start, end + 1);
+  throw new Error('Wayfair response did not contain JSON.');
+};
+
+const generateWayfairBudget = async (
+  ai: GoogleGenAI,
+  params: {
+    roomLabel: string;
+    styleLabel: string;
+    designDescription: string;
+    language: Language;
+  }
+): Promise<{ items: WayfairBudgetItem[]; note: string }> => {
+  const prompt = `
+You are a procurement-focused interior designer.
+
+TASK:
+Create a Wayfair-only shopping list for this generated interior design.
+
+ROOM: ${params.roomLabel}
+STYLE: ${params.styleLabel}
+DESIGN DESCRIPTION:
+${params.designDescription}
+
+STRICT PROCUREMENT RULES:
+1. Use ONLY products or product-searches from https://www.wayfair.com.
+2. Use Google Search to look for real Wayfair product pages or strong Wayfair category/search matches.
+3. Do not invent product IDs, SKUs, seller names, brands or URLs.
+4. If a direct product page is not confidently found, use a Wayfair search URL for the exact item name.
+5. Return 6 to 10 items that could realistically compose this room: furniture, rug, lighting, wall decor, accents, storage and textiles.
+6. Prices must be realistic planning prices in USD. If exact current price is uncertain, use a conservative estimate and explain that in note.
+
+Return ONLY valid JSON:
+{
+  "note": "short procurement note in ${params.language === 'pt' ? 'Portuguese' : params.language === 'es' ? 'Spanish' : 'English'}",
+  "items": [
+    {
+      "name": "Wayfair-searchable product name",
+      "category": "Sofa | Rug | Lighting | Decor | Storage | Table | Chair | Bedding | Bath | Outdoor",
+      "quantity": 1,
+      "unitPrice": 249.99,
+      "url": "https://www.wayfair.com/...",
+      "note": "direct product if verified, otherwise search match"
+    }
+  ]
+}`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+    config: { tools: [{ googleSearch: {} }] },
+  });
+
+  const parsed = JSON.parse(extractJsonObject(response.text || '{}'));
+  const items = Array.isArray(parsed.items)
+    ? parsed.items.map(normalizeWayfairItem).filter(Boolean) as WayfairBudgetItem[]
+    : [];
+
+  return {
+    items,
+    note: String(parsed.note || 'Wayfair shopping list generated with product links/search links for final validation.'),
+  };
+};
+
 const TRANSLATIONS = {
   pt: {
     nav: { store: "Loja", login: "Entrar", credits: "créditos" },
@@ -441,6 +560,8 @@ export default function App() {
 
   const [isApproved, setIsApproved] = useState(false);
   const [technicalBrief, setTechnicalBrief] = useState<string>('');
+  const [wayfairBudget, setWayfairBudget] = useState<WayfairBudgetItem[]>([]);
+  const [wayfairBudgetNote, setWayfairBudgetNote] = useState('');
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingExtras, setIsGeneratingExtras] = useState(false);
@@ -613,6 +734,8 @@ export default function App() {
     setTransformationReport('');
     setIsApproved(false);
     setTechnicalBrief('');
+    setWayfairBudget([]);
+    setWayfairBudgetNote('');
     setCurrentStep(2);
   };
 
@@ -628,11 +751,13 @@ export default function App() {
 
     if (!(await deductCredits(GENERATION_COST))) return;
 
-    if (!overrideMaterial) {
-        setGeneratedImage(null); 
-        setIsApproved(false); 
-        setTechnicalBrief('');
-    }
+	    if (!overrideMaterial) {
+	        setGeneratedImage(null); 
+	        setIsApproved(false); 
+	        setTechnicalBrief('');
+	        setWayfairBudget([]);
+	        setWayfairBudgetNote('');
+	    }
     
     setIsGenerating(true);
     
@@ -657,10 +782,12 @@ export default function App() {
         INSTRUCTIONS:
         1. ANALYZE STRUCTURE: Identify solid walls. IF A WALL IS BLANK, YOU MUST PROPOSE COVERING IT WITH WOOD OR STONE.
         2. DO NOT LEAVE WALLS BLANK.
-        3. REDESIGN INTERIOR: Apply a completely new, sophisticated layout.
-        
-        Output only the raw prompt text.
-      `;
+	        3. REDESIGN INTERIOR: Apply a completely new, sophisticated layout.
+	        4. WAYFAIR PROCUREMENT LOCK: The design must be executable with furniture, lighting, rugs, wall decor, storage, textiles and decorative items that can be sourced on Wayfair.com.
+	        5. Do not depend on custom-only or unbuyable pieces unless they are architectural finishes already present in the room.
+	        
+	        Output only the raw prompt text.
+	      `;
 
       const creativeRes = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
@@ -708,15 +835,25 @@ export default function App() {
           setGeneratedImage(imgUrl);
           setExtraImages([]);
           
-          if (!overrideMaterial) {
-             setLoadingMessage(t.loading.report);
-             const reportRes = await ai.models.generateContent({
-                 model: 'gemini-2.5-flash',
-                 contents: `Generate a 3 bullet point design report for: ${enhancedDescription}. Lang: ${lang}.`
-             });
-             setTransformationReport(reportRes.text || "Report unavailable.");
-          }
-          setCurrentStep(4);
+	          if (!overrideMaterial) {
+	             setLoadingMessage(t.loading.report);
+	             const reportRes = await ai.models.generateContent({
+	                 model: 'gemini-2.5-flash',
+	                 contents: `Generate a 3 bullet point design report for: ${enhancedDescription}. Lang: ${lang}.`
+		             });
+		             setTransformationReport(reportRes.text || "Report unavailable.");
+	          }
+	          setLoadingMessage("Curando lista de compras Wayfair...");
+	          setWayfairBudget([]);
+	          const wayfairResult = await generateWayfairBudget(ai, {
+	              roomLabel: selectedRoomId === 'custom_commercial' ? customRoomType : ROOM_LABELS['en'][selectedRoomId],
+	              styleLabel: STYLE_LABELS['en'][effectiveStyleId],
+	              designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
+	              language: lang,
+	          });
+	          setWayfairBudget(wayfairResult.items);
+	          setWayfairBudgetNote(wayfairResult.note);
+	          setCurrentStep(4);
       } else {
           throw new Error("No image generated");
       }
@@ -741,11 +878,14 @@ export default function App() {
          const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
          const prompt = `
             ACT AS A SENIOR INTERIOR ARCHITECT.
-            PROJECT: ${ROOM_LABELS['en'][selectedRoomId]} in ${STYLE_LABELS['en'][selectedStyleId]} style.
-            TASK: Create a Professional Project Briefing for the Carpenter/Contractor.
-            LANGUAGE: ${lang === 'pt' ? 'Portuguese' : lang === 'es' ? 'Spanish' : 'English'}.
-            FORMAT: Plain text with headers.
-         `;
+	            PROJECT: ${ROOM_LABELS['en'][selectedRoomId]} in ${STYLE_LABELS['en'][selectedStyleId]} style.
+	            TASK: Create a Professional Project Briefing for the Carpenter/Contractor.
+	            LANGUAGE: ${lang === 'pt' ? 'Portuguese' : lang === 'es' ? 'Spanish' : 'English'}.
+	            WAYFAIR PROCUREMENT LIST:
+	            ${wayfairBudget.map(item => `- ${item.quantity}x ${item.name} (${item.category}) - ${toMoney(item.totalPrice)} - ${item.url}`).join('\n')}
+	            Include a short note that movable furniture/decor items were selected from Wayfair links/searches and must be checked for final availability before purchase.
+	            FORMAT: Plain text with headers.
+	         `;
          const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
          setTechnicalBrief(res.text || "Briefing not available.");
          setIsApproved(true);
@@ -800,22 +940,54 @@ export default function App() {
       
       const textLines = doc.splitTextToSize(technicalBrief, pageWidth - (margin * 2));
       const lineHeight = 6;
-      textLines.forEach((line: string) => {
-          if (cursorY + lineHeight > pageHeight - margin) {
-              doc.addPage();
+	      textLines.forEach((line: string) => {
+	          if (cursorY + lineHeight > pageHeight - margin) {
+	              doc.addPage();
               drawHeader();
               doc.setTextColor(30, 30, 30);
               doc.setFontSize(10);
           }
-          doc.text(line, margin, cursorY);
-          cursorY += lineHeight;
-      });
-      doc.save(`BHome_Briefing_${selectedRoomId}.pdf`);
-  };
+	          doc.text(line, margin, cursorY);
+	          cursorY += lineHeight;
+	      });
+	      if (wayfairBudget.length > 0) {
+	          cursorY += 8;
+	          if (cursorY > pageHeight - 50) {
+	              doc.addPage();
+	              drawHeader();
+	          }
+	          doc.setFont("helvetica", "bold");
+	          doc.setFontSize(13);
+	          doc.setTextColor(217, 119, 6);
+	          doc.text("Orçamento Wayfair", margin, cursorY);
+	          cursorY += 8;
+	          doc.setFont("helvetica", "normal");
+	          doc.setFontSize(9);
+	          doc.setTextColor(40, 40, 40);
+	          const budgetLines = doc.splitTextToSize(
+	              `${wayfairBudgetNote || 'Itens selecionados em Wayfair para validação final de disponibilidade e preço.'}\n\n` +
+	              wayfairBudget.map((item, index) =>
+	                  `${index + 1}. ${item.quantity}x ${item.name} | ${item.category} | ${toMoney(item.totalPrice)} | ${item.url}`
+	              ).join('\n'),
+	              pageWidth - (margin * 2)
+	          );
+	          budgetLines.forEach((line: string) => {
+	              if (cursorY + lineHeight > pageHeight - margin) {
+	                  doc.addPage();
+	                  drawHeader();
+	                  doc.setTextColor(40, 40, 40);
+	                  doc.setFontSize(9);
+	              }
+	              doc.text(line, margin, cursorY);
+	              cursorY += lineHeight;
+	          });
+	      }
+	      doc.save(`BHome_Briefing_${selectedRoomId}.pdf`);
+	  };
 
-  const generateExtraViews = async () => {
-      if (!generatedImage || !(await deductCredits(EXTRA_VIEWS_COST))) return;
-      setIsGeneratingExtras(true);
+	  const generateExtraViews = async () => {
+	      if (!generatedImage || !(await deductCredits(EXTRA_VIEWS_COST))) return;
+	      setIsGeneratingExtras(true);
       try {
           const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
           const optimized = await resizeImage(generatedImage); 
@@ -837,10 +1009,12 @@ export default function App() {
               }
           }
           setExtraImages(newExtras);
-      } catch(e) { console.error(e); } finally { setIsGeneratingExtras(false); }
-  };
+	      } catch(e) { console.error(e); } finally { setIsGeneratingExtras(false); }
+	  };
 
-  return (
+	  const wayfairTotal = wayfairBudget.reduce((sum, item) => sum + item.totalPrice, 0);
+
+	  return (
     <div className="min-h-screen bg-stone-950 font-sans text-stone-200 pb-20 relative">
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
@@ -972,9 +1146,68 @@ export default function App() {
                             <p className="text-stone-400">{t.results.subtitle}</p>
                         </div>
 
-                        <ComparisonSlider before={selectedImage} after={generatedImage} />
-                        
-                        {/* FLUXO DE APROVAÇÃO (BOTÃO AUTORIZAR) */}
+	                        <ComparisonSlider before={selectedImage} after={generatedImage} />
+
+	                        {/* WAYFAIR PROCUREMENT BUDGET */}
+	                        <div className="bg-stone-900 border border-amber-700/30 rounded-2xl overflow-hidden shadow-xl">
+	                            <div className="p-5 border-b border-stone-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+	                                <div>
+	                                    <div className="flex items-center gap-2 text-amber-500 font-black uppercase tracking-wide text-sm">
+	                                        <ShoppingBag className="w-4 h-4" />
+	                                        Wayfair Shopping List
+	                                    </div>
+	                                    <p className="text-stone-400 text-sm mt-1">
+	                                        Itens móveis e decoração limitados à Wayfair, com link direto ou busca validável na loja.
+	                                    </p>
+	                                </div>
+	                                <div className="bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-right">
+	                                    <p className="text-[10px] text-stone-500 uppercase font-bold">Total estimado</p>
+	                                    <p className="text-2xl text-amber-500 font-black">{toMoney(wayfairTotal)}</p>
+	                                </div>
+	                            </div>
+	                            <div className="divide-y divide-stone-800">
+	                                {wayfairBudget.length > 0 ? wayfairBudget.map((item, index) => (
+	                                    <div key={`${item.name}-${index}`} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+	                                        <div className="min-w-0">
+	                                            <div className="flex flex-wrap items-center gap-2">
+	                                                <span className="text-xs bg-stone-800 text-stone-300 px-2 py-1 rounded font-bold">{item.category}</span>
+	                                                <span className={`text-[10px] px-2 py-1 rounded uppercase font-black ${item.validation === 'direct_product' ? 'bg-green-900/40 text-green-400' : 'bg-amber-900/40 text-amber-300'}`}>
+	                                                    {item.validation === 'direct_product' ? 'produto Wayfair' : 'busca Wayfair'}
+	                                                </span>
+	                                            </div>
+	                                            <h3 className="font-bold text-stone-100 mt-2">{item.quantity}x {item.name}</h3>
+	                                            {item.note && <p className="text-xs text-stone-500 mt-1">{item.note}</p>}
+	                                        </div>
+	                                        <div className="flex items-center gap-3 shrink-0">
+	                                            <div className="text-right">
+	                                                <p className="font-black text-stone-100">{toMoney(item.totalPrice)}</p>
+	                                                <p className="text-xs text-stone-500">{toMoney(item.unitPrice)} un.</p>
+	                                            </div>
+	                                            <a
+	                                                href={item.url}
+	                                                target="_blank"
+	                                                rel="noopener noreferrer"
+	                                                className="bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-lg p-3 text-amber-400"
+	                                                title="Abrir na Wayfair"
+	                                            >
+	                                                <ExternalLink className="w-4 h-4" />
+	                                            </a>
+	                                        </div>
+	                                    </div>
+	                                )) : (
+	                                    <div className="p-5 text-sm text-stone-400">
+	                                        A lista Wayfair ainda não foi gerada. Gere novamente a transformação para criar o orçamento por itens da loja.
+	                                    </div>
+	                                )}
+	                            </div>
+	                            {wayfairBudgetNote && (
+	                                <div className="p-4 bg-stone-950/70 text-xs text-stone-500 border-t border-stone-800">
+	                                    {wayfairBudgetNote}
+	                                </div>
+	                            )}
+	                        </div>
+	                        
+	                        {/* FLUXO DE APROVAÇÃO (BOTÃO AUTORIZAR) */}
                         <div className="flex flex-col items-center gap-4 bg-stone-900 p-6 rounded-2xl border border-stone-800 shadow-xl">
                             {!isApproved ? (
                                 <div className="text-center w-full">
