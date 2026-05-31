@@ -48,7 +48,7 @@ let stripePromise: any = null;
 try {
     supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     if (STRIPE_PUBLIC_KEY) stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
-    console.log("🚀 B Home Concept: Supabase Inicializado.");
+    console.log("🚀 Decore AI: Supabase Inicializado.");
 } catch (e) {
     console.error("Erro crítico na inicialização do Supabase:", e);
 }
@@ -229,7 +229,7 @@ const TRANSLATIONS = {
   pt: {
     nav: { store: "Loja", login: "Entrar", credits: "créditos" },
     steps: { upload: "Upload da Imagem", room: "Tipo de Ambiente", style: "Estilo de Decoração" },
-    upload: { title: "Arraste sua foto ou clique aqui", subtitle: "Suportamos JPG, PNG de alta qualidade" },
+    upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera" },
     roomSelect: { title: "Qual ambiente vamos transformar?", residential: "Residencial", commercial: "Comercial & Corporativo", next: "Próximo", customLabel: "Descreva seu negócio:", customPlaceholder: "Ex: Barbearia Vintage..." },
     kidsConfig: { title: "Configuração do Quarto Infantil", age: "Idade", theme: "Tema", themePlaceholder: "Ex: Dinossauros...", gender: "Gênero", select: "Selecione...", boy: "Menino", girl: "Menina", neutral: "Neutro" },
     styleSelect: { title: "Escolha o estilo ideal", cost: "Custo", generate: "Gerar Transformação" },
@@ -251,7 +251,7 @@ const TRANSLATIONS = {
   en: {
     nav: { store: "Store", login: "Login", credits: "credits" },
     steps: { upload: "Upload Image", room: "Room Type", style: "Decor Style" },
-    upload: { title: "Drag photo or click here", subtitle: "We support high-quality JPG, PNG" },
+    upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera" },
     roomSelect: { title: "Which room are we transforming?", residential: "Residential", commercial: "Commercial", next: "Next", customLabel: "Describe business:", customPlaceholder: "Ex: Vintage Barbershop..." },
     kidsConfig: { title: "Kids Room Config", age: "Age", theme: "Theme", themePlaceholder: "Ex: Dinosaurs...", gender: "Gender", select: "Select...", boy: "Boy", girl: "Girl", neutral: "Neutral" },
     styleSelect: { title: "Choose ideal style", cost: "Cost", generate: "Generate" },
@@ -273,7 +273,7 @@ const TRANSLATIONS = {
   es: {
     nav: { store: "Tienda", login: "Entrar", credits: "créditos" },
     steps: { upload: "Subir Imagen", room: "Tipo de Ambiente", style: "Estilo" },
-    upload: { title: "Arrastra tu foto o clic aquí", subtitle: "Soportamos JPG, PNG de alta calidad" },
+    upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara" },
     roomSelect: { title: "¿Qué ambiente transformamos?", residential: "Residencial", commercial: "Comercial", next: "Siguiente", customLabel: "Describe tu negocio:", customPlaceholder: "Ej: Barbería Vintage..." },
     kidsConfig: { title: "Config Habitación Infantil", age: "Edad", theme: "Tema", themePlaceholder: "Ej: Dinosaurios...", gender: "Género", select: "Seleccione...", boy: "Niño", girl: "Niña", neutral: "Neutro" },
     styleSelect: { title: "Elige estilo ideal", cost: "Costo", generate: "Generar" },
@@ -593,6 +593,7 @@ export default function App() {
   const [customMaterial, setCustomMaterial] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const supabaseDisabled = useRef(false);
 
   useEffect(() => {
@@ -946,7 +947,7 @@ export default function App() {
         doc.setTextColor(217, 119, 6);
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
-        doc.text("B Home Concept", margin, 17);
+        doc.text("Decore AI", margin, 17);
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
@@ -1022,7 +1023,7 @@ export default function App() {
 	              cursorY += lineHeight;
 	          });
 	      }
-	      doc.save(`BHome_Briefing_${selectedRoomId}.pdf`);
+	      doc.save(`DecoreAI_Briefing_${selectedRoomId}.pdf`);
 	  };
 
 	  const generateExtraViews = async () => {
@@ -1100,7 +1101,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
             <div className="bg-[#f3e8ff] p-2 rounded border border-[#dac7e5]"><Hexagon className="text-[#7F187F] w-5 h-5"/></div>
-            B Home Concept
+            Decore AI
           </div>
           <div className="flex items-center gap-4">
              {/* DB STATUS LED */}
@@ -1141,11 +1142,22 @@ export default function App() {
            {isGenerating ? <Spinner message={loadingMessage} /> : (
                <>
                 {currentStep === 1 && (
-                    <div onClick={() => fileInputRef.current?.click()} className="bg-white rounded-2xl border-2 border-dashed border-[#eadff2] p-12 text-center hover:border-[#7F187F] cursor-pointer group">
+                    <div className="bg-white rounded-2xl border-2 border-dashed border-[#eadff2] p-8 md:p-12 text-center hover:border-[#7F187F] transition-colors group">
                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload}/>
+                        <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleImageUpload}/>
                         <div className="w-20 h-20 bg-[#f3e8ff] rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform"><UploadCloud size={40} className="text-[#85758a] group-hover:text-[#7F187F]"/></div>
                         <h2 className="text-2xl font-bold mb-2">{t.upload.title}</h2>
-                        <p className="text-[#6f6075]">{t.upload.subtitle}</p>
+                        <p className="text-[#6f6075] mb-8">{t.upload.subtitle}</p>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                            <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#7F187F] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#651365] transition-colors shadow-lg">
+                                <ImagePlus className="w-5 h-5" />
+                                {t.upload.gallery}
+                            </button>
+                            <button type="button" onClick={() => cameraInputRef.current?.click()} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#f3e8ff] text-[#7F187F] px-6 py-3 rounded-xl font-bold hover:bg-[#eadff2] transition-colors border border-[#dac7e5]">
+                                <Camera className="w-5 h-5" />
+                                {t.upload.camera}
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -1342,7 +1354,7 @@ export default function App() {
                                         <FileDown className="mr-2 w-5 h-5"/> {t.results.downloadPdf}
                                     </button>
                                     <button 
-                                        onClick={() => {const l = document.createElement('a'); l.href=generatedImage; l.download='BHome_Render.jpg'; l.click()}} 
+                                        onClick={() => {const l = document.createElement('a'); l.href=generatedImage; l.download='DecoreAI_Render.jpg'; l.click()}} 
                                         className="bg-[#f3e8ff] text-[#4b3650] px-6 py-3 rounded-xl font-bold flex items-center hover:bg-[#eadff2] border border-[#dac7e5]"
                                     >
                                         <Download className="mr-2 w-5 h-5"/> {t.results.download}

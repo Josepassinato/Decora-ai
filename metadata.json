@@ -1,5 +1,5 @@
 {
-  "name": "B Home Concept",
+  "name": "Decore AI",
   "description": "An interior design transformation app that allows users to upload a photo of a room, select a room type and decor style, and visualize an AI-powered redesign.",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["camera"]
 }
