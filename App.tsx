@@ -113,6 +113,16 @@ const isWayfairUrl = (url: string) => {
   }
 };
 
+const isWayfairDirectProductUrl = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    const isWayfair = parsed.hostname === 'wayfair.com' || parsed.hostname.endsWith('.wayfair.com');
+    return isWayfair && !parsed.pathname.includes('keyword.php');
+  } catch {
+    return false;
+  }
+};
+
 const toMoney = (value: number) =>
   value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
@@ -132,10 +142,18 @@ const normalizeWayfairItem = (raw: any): WayfairBudgetItem | null => {
     unitPrice,
     totalPrice: Number((unitPrice * quantity).toFixed(2)),
     url,
-    validation: proposedUrl && isWayfairUrl(proposedUrl) ? 'direct_product' : 'search_result',
+    validation: proposedUrl && isWayfairDirectProductUrl(proposedUrl) ? 'direct_product' : 'search_result',
     note: String(raw.note || '').trim(),
   };
 };
+
+const PRODUCT_PROVIDERS = [
+  { id: 'wayfair', name: 'Wayfair', status: 'active', note: 'Fornecedor principal para decoracao compravel.' },
+  { id: 'home-depot', name: 'Home Depot', status: 'planned', note: 'Materiais e acabamentos de obra.' },
+  { id: 'ikea', name: 'IKEA', status: 'planned', note: 'Moveis modulares e economicos.' },
+  { id: 'west-elm', name: 'West Elm', status: 'planned', note: 'Decoracao premium.' },
+  { id: 'manual-catalog', name: 'Catalogo manual', status: 'planned', note: 'Lojas sem catalogo publico, como HomeSense.' },
+];
 
 const extractJsonObject = (text: string) => {
   const fenced = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
@@ -562,6 +580,10 @@ export default function App() {
   const [technicalBrief, setTechnicalBrief] = useState<string>('');
   const [wayfairBudget, setWayfairBudget] = useState<WayfairBudgetItem[]>([]);
   const [wayfairBudgetNote, setWayfairBudgetNote] = useState('');
+  const [selectedProviderId, setSelectedProviderId] = useState('wayfair');
+  const [savedProjects, setSavedProjects] = useState<any[]>([]);
+  const [savingProject, setSavingProject] = useState(false);
+  const [projectSaveMessage, setProjectSaveMessage] = useState('');
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingExtras, setIsGeneratingExtras] = useState(false);
@@ -580,6 +602,21 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('bhome_lang', lang);
   }, [lang]);
+
+  const refreshSavedProjects = useCallback(async () => {
+    try {
+      const response = await fetch('/api/projects');
+      if (!response.ok) return;
+      const data = await response.json();
+      setSavedProjects(Array.isArray(data.projects) ? data.projects : []);
+    } catch (error) {
+      console.warn('Project history unavailable', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshSavedProjects();
+  }, [refreshSavedProjects]);
 
   // --- HEALTH CHECK ---
   useEffect(() => {
@@ -1012,6 +1049,35 @@ export default function App() {
 	      } catch(e) { console.error(e); } finally { setIsGeneratingExtras(false); }
 	  };
 
+	  const saveCommercialProject = async () => {
+	      if (!selectedRoomId || !selectedStyleId || !generatedImage) return;
+	      setSavingProject(true);
+	      setProjectSaveMessage('');
+	      try {
+	          const response = await fetch('/api/projects', {
+	              method: 'POST',
+	              headers: { 'Content-Type': 'application/json' },
+	              body: JSON.stringify({
+	                  providerId: selectedProviderId,
+	                  room: ROOM_LABELS[lang][selectedRoomId] || selectedRoomId,
+	                  style: STYLE_LABELS[lang][selectedStyleId] || selectedStyleId,
+	                  budgetItems: wayfairBudget,
+	                  budgetNote: wayfairBudgetNote,
+	                  report: transformationReport,
+	                  previewImage: generatedImage,
+	              }),
+	          });
+	          if (!response.ok) throw new Error('save_failed');
+	          setProjectSaveMessage('Projeto salvo no histórico comercial.');
+	          await refreshSavedProjects();
+	      } catch (error) {
+	          console.error(error);
+	          setProjectSaveMessage('Não foi possível salvar agora.');
+	      } finally {
+	          setSavingProject(false);
+	      }
+	  };
+
 	  const wayfairTotal = wayfairBudget.reduce((sum, item) => sum + item.totalPrice, 0);
 
 	  return (
@@ -1019,12 +1085,12 @@ export default function App() {
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
           <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce-in">
-              <div className="bg-amber-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-amber-500/50 backdrop-blur-md">
-                  <Wifi className="w-5 h-5 animate-pulse" />
-                  <span className="font-bold text-sm tracking-wide">{toastMessage}</span>
-              </div>
-          </div>
-      )}
+	              <div className="bg-amber-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-amber-500/50 backdrop-blur-md">
+	                  <Wifi className="w-5 h-5 animate-pulse" />
+	                  <span className="font-bold text-sm tracking-wide">{toastMessage}</span>
+	              </div>
+	          </div>
+	      )}
 
       {/* HEADER */}
       <header className="bg-stone-900/80 backdrop-blur border-b border-stone-800 sticky top-0 z-40">
@@ -1118,9 +1184,31 @@ export default function App() {
                     <div className="space-y-6 animate-fade-in">
                         <div className="flex justify-between items-center">
                             <h2 className="text-2xl font-bold">{t.styleSelect.title}</h2>
-                            <span className="bg-stone-900 px-3 py-1 rounded text-sm text-stone-400">{t.styleSelect.cost}: {GENERATION_COST}</span>
-                        </div>
-                        {loadingStyles ? (
+	                            <span className="bg-stone-900 px-3 py-1 rounded text-sm text-stone-400">{t.styleSelect.cost}: {GENERATION_COST}</span>
+	                        </div>
+	                        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5">
+	                            <div className="flex items-center gap-2 mb-4">
+	                                <Store className="w-5 h-5 text-amber-500" />
+	                                <div>
+	                                    <h3 className="font-black text-stone-100">Fornecedor do orçamento</h3>
+	                                    <p className="text-xs text-stone-500">Nesta versão, a decoração comprável fica travada no fornecedor ativo.</p>
+	                                </div>
+	                            </div>
+	                            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+	                                {PRODUCT_PROVIDERS.map(provider => (
+	                                    <button
+	                                        key={provider.id}
+	                                        onClick={() => provider.status === 'active' && setSelectedProviderId(provider.id)}
+	                                        disabled={provider.status !== 'active'}
+	                                        className={`text-left rounded-xl border p-3 transition-all ${selectedProviderId === provider.id ? 'bg-amber-600/10 border-amber-500 text-amber-300' : 'bg-stone-950 border-stone-800 text-stone-400'} ${provider.status !== 'active' ? 'opacity-45 cursor-not-allowed' : 'hover:border-amber-500/70'}`}
+	                                    >
+	                                        <div className="font-black text-sm">{provider.name}</div>
+	                                        <div className="text-[10px] uppercase font-bold mt-1">{provider.status === 'active' ? 'ativo' : 'em breve'}</div>
+	                                    </button>
+	                                ))}
+	                            </div>
+	                        </div>
+	                        {loadingStyles ? (
                             <div className="flex justify-center py-20"><Spinner message={t.loading.seeding || "Loading..."} /></div>
                         ) : (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1160,11 +1248,26 @@ export default function App() {
 	                                        Itens móveis e decoração limitados à Wayfair, com link direto ou busca validável na loja.
 	                                    </p>
 	                                </div>
-	                                <div className="bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-right">
-	                                    <p className="text-[10px] text-stone-500 uppercase font-bold">Total estimado</p>
-	                                    <p className="text-2xl text-amber-500 font-black">{toMoney(wayfairTotal)}</p>
+	                                <div className="flex flex-col md:flex-row gap-3 md:items-center">
+	                                    <button
+	                                        onClick={saveCommercialProject}
+	                                        disabled={savingProject || wayfairBudget.length === 0}
+	                                        className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white px-4 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"
+	                                    >
+	                                        <ClipboardList className="w-4 h-4" />
+	                                        {savingProject ? 'Salvando...' : 'Salvar proposta'}
+	                                    </button>
+	                                    <div className="bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-right">
+	                                        <p className="text-[10px] text-stone-500 uppercase font-bold">Total estimado</p>
+	                                        <p className="text-2xl text-amber-500 font-black">{toMoney(wayfairTotal)}</p>
+	                                    </div>
 	                                </div>
 	                            </div>
+	                            {projectSaveMessage && (
+	                                <div className="mx-5 mb-4 rounded-lg border border-stone-800 bg-stone-950 px-4 py-2 text-xs text-stone-300">
+	                                    {projectSaveMessage}
+	                                </div>
+	                            )}
 	                            <div className="divide-y divide-stone-800">
 	                                {wayfairBudget.length > 0 ? wayfairBudget.map((item, index) => (
 	                                    <div key={`${item.name}-${index}`} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -1274,18 +1377,36 @@ export default function App() {
                                 <h3 className="font-bold flex items-center"><Layers className="mr-2 text-stone-400 w-5 h-5"/> {t.results.extraViewsTitle}</h3>
                                 <button onClick={generateExtraViews} disabled={isGeneratingExtras} className="text-xs bg-stone-800 px-3 py-1 rounded text-stone-300 hover:bg-stone-700">{isGeneratingExtras ? t.results.generatingAngles : t.results.generateAngles}</button>
                             </div>
-                            <div className="grid grid-cols-3 gap-4">
-                                {extraImages.map((img, i) => (
-                                    <div key={i} className="relative rounded-lg overflow-hidden border border-stone-800 group">
-                                        <img src={img.url} className="w-full h-32 object-cover"/>
-                                        <div className="absolute bottom-0 bg-black/60 w-full p-1 text-[10px] text-center">{img.label}</div>
-                                        <button onClick={() => {const l=document.createElement('a'); l.href=img.url; l.download=`View_${i}.jpg`; l.click()}} className="absolute top-1 right-1 bg-black/50 p-1 rounded hover:bg-white/20 hidden group-hover:block"><Download size={12}/></button>
-                                    </div>
-                                ))}
-                            </div>
-                         </div>
-                    </div>
-                )}
+	                            <div className="grid grid-cols-3 gap-4">
+	                                {extraImages.map((img, i) => (
+	                                    <div key={i} className="relative rounded-lg overflow-hidden border border-stone-800 group">
+	                                        <img src={img.url} className="w-full h-32 object-cover"/>
+	                                        <div className="absolute bottom-0 bg-black/60 w-full p-1 text-[10px] text-center">{img.label}</div>
+	                                        <button onClick={() => {const l=document.createElement('a'); l.href=img.url; l.download=`View_${i}.jpg`; l.click()}} className="absolute top-1 right-1 bg-black/50 p-1 rounded hover:bg-white/20 hidden group-hover:block"><Download size={12}/></button>
+	                                    </div>
+	                                ))}
+	                            </div>
+	                         </div>
+	                         {savedProjects.length > 0 && (
+	                            <div className="border-t border-stone-800 pt-6">
+	                                <h3 className="font-bold flex items-center mb-4">
+	                                    <ClipboardList className="mr-2 text-stone-400 w-5 h-5" />
+	                                    Histórico comercial
+	                                </h3>
+	                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+	                                    {savedProjects.slice(0, 3).map(project => (
+	                                        <div key={project.id} className="bg-stone-900 border border-stone-800 rounded-xl p-4">
+	                                            <p className="text-xs text-stone-500">{new Date(project.createdAt).toLocaleDateString()}</p>
+	                                            <h4 className="font-black text-stone-100 mt-1">{project.room || 'Ambiente'}</h4>
+	                                            <p className="text-xs text-stone-400">{project.style || 'Estilo'} • {project.providerName}</p>
+	                                            <p className="text-amber-500 font-black mt-2">{toMoney(Number(project.total || 0))}</p>
+	                                        </div>
+	                                    ))}
+	                                </div>
+	                            </div>
+	                         )}
+	                    </div>
+	                )}
                </>
            )}
         </div>
