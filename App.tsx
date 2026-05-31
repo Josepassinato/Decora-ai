@@ -2,14 +2,10 @@ import React, { useState, useRef, useEffect, useCallback, type ReactNode, type F
 import ReactDOM from 'react-dom/client';
 import { UploadCloud, Sofa, BedDouble, Baby, LampDesk, CookingPot, Bath, Wand2, PartyPopper, XCircle, FileText, Utensils, Tv, Shirt, Trees, DoorOpen, Waves, Bed, BedSingle, Clapperboard, CarFront, Flame, Umbrella, Building2, Briefcase, Stethoscope, Dumbbell, Coffee, Presentation, Gamepad2, Store, Download, FileDown, Coins, CreditCard, LogOut, Lock, ShieldCheck, CheckCircle2, ClipboardList, HardHat, Info, Rocket, Palette, Calendar, ExternalLink, Layers, Eye, ImagePlus, Camera, Maximize, PaintBucket, RefreshCw, Hexagon, Sparkles, ShoppingBag, HelpCircle, Globe, Stamp, Wifi, WifiOff, Database, HardDrive, Bell } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
-import { createClient } from '@supabase/supabase-js';
 import { loadStripe } from "@stripe/stripe-js";
 import { jsPDF } from "jspdf";
 
 // --- CONFIGURAÇÃO DE AMBIENTE ---
-
-const SUPABASE_URL = 'https://nyyzvhrwyicaddthvnxt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55eXp2aHJ3eWljYWRkdGh2bnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1ODQ2OTUsImV4cCI6MjA4MTE2MDY5NX0.cHazJMIMQApc71eCRWdhojaiawr1LJAlp05afJrtD3c';
 
 const STRIPE_PUBLIC_KEY = "pk_live_51STX0AGP0hzTc9bmcPigXv82Tr0ee11AV3YFHpZZgvjq0JFvKUMZLHP4P2keTn2BhaPj90tTFNkw2N1iQXoSNqhU00K4M923KK"; 
 
@@ -42,15 +38,13 @@ const DEFAULT_SYSTEM_MEMORY = {
 
 // --- INICIALIZAÇÃO DE SERVIÇOS ---
 
-let supabase: any = null;
 let stripePromise: any = null;
 
 try {
-    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     if (STRIPE_PUBLIC_KEY) stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
-    console.log("🚀 Decore AI: Supabase Inicializado.");
+    console.log("🚀 Decore AI: serviços do cliente inicializados.");
 } catch (e) {
-    console.error("Erro crítico na inicialização do Supabase:", e);
+    console.error("Erro crítico na inicialização dos serviços:", e);
 }
 
 // --- REDIMENSIONAMENTO DE IMAGEM (CLIENT SIDE) ---
@@ -551,12 +545,9 @@ export default function App() {
   const t = TRANSLATIONS[lang];
   
   const [credits, setCredits] = useState(1000);
-  const [user, setUser] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState(1);
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
-  // NEW: Track Source
-  const [configSource, setConfigSource] = useState<'local' | 'remote'>('local');
+  const [configSource, setConfigSource] = useState<'local' | 'mongo'>('local');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -594,7 +585,6 @@ export default function App() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const supabaseDisabled = useRef(false);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('bhome_lang');
@@ -620,96 +610,36 @@ export default function App() {
     refreshSavedProjects();
   }, [refreshSavedProjects]);
 
-  // --- HEALTH CHECK ---
-  useEffect(() => {
-    const checkConnection = async () => {
-       if (!supabase) { setDbStatus('disconnected'); return; }
-       // Simple ping: try to fetch count of styles
-       const { error } = await supabase.from('decor_styles').select('id', { count: 'exact', head: true });
-       if (error && error.code !== 'PGRST116') {
-           console.error("Supabase Check Failed:", error);
-           setDbStatus('disconnected');
-       } else {
-           setDbStatus('connected');
-       }
-    };
-    checkConnection();
-  }, []);
-
-  // --- SAFE SUPABASE HANDLER ---
-  const safeSupabaseOp = async (operation: () => Promise<any>) => {
-      if (supabaseDisabled.current || !supabase) return null;
-      try {
-          const { data, error } = await operation();
-          if (error) {
-              console.warn("Supabase Warning:", error.message);
-              if (error.code === 'PGRST116' || error.message.includes('fetch')) {
-                 supabaseDisabled.current = true;
-                 setIsOfflineMode(true);
-                 setDbStatus('disconnected');
-              }
-              return null;
-          }
-          return data;
-      } catch (e: any) {
-          if (!supabaseDisabled.current) {
-              console.warn("🛑 Supabase/Network Failure. Going Offline.");
-              supabaseDisabled.current = true;
-              setIsOfflineMode(true);
-              setDbStatus('disconnected');
-          }
-          return null;
-      }
-  };
-
-  useEffect(() => {
-    if (supabase) {
-        supabase.auth.getSession().then(({ data: { session } }: any) => {
-            if (session?.user) {
-                setUser(session.user);
-                if (!supabaseDisabled.current) {
-                    safeSupabaseOp(() => supabase.from('users').select('credits').eq('id', session.user.id).single())
-                    .then((data: any) => {
-                        if (data) setCredits(data.credits);
-                        else {
-                            safeSupabaseOp(() => supabase.from('users').insert({ id: session.user.id, email: session.user.email, credits: 5 }));
-                            setCredits(5);
-                        }
-                    });
-                }
-            }
-        });
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-            setUser(session?.user ?? null);
-        });
-
-        return () => subscription.unsubscribe();
-    }
-  }, []);
-
-  // --- DATA SYNC (STYLES & CONFIG) ---
+  // --- DATA SYNC (MONGO VIA BACKEND API) ---
   useEffect(() => {
       const syncData = async () => {
-          if (supabaseDisabled.current || !supabase) return;
-          
           setLoadingStyles(true);
-          
-          // 1. Sync Styles
-          const styles = await safeSupabaseOp(() => supabase.from('decor_styles').select('*'));
-          if (styles && styles.length > 0) {
-              setDecorStyles(styles);
-          } else if (styles !== null && styles.length === 0) {
-              // Attempt to seed if empty (and allowed - usually only Service Role can, so this might fail silently which is fine for public/anon)
-              // NOTE: For 'decor_styles' we keep seeding as a fallback if policy allows, but for 'system_config' we go strict.
-              await safeSupabaseOp(() => supabase.from('decor_styles').insert(INITIAL_DECOR_STYLES));
-          }
+          try {
+              const [healthResponse, stylesResponse, configResponse, creditsResponse] = await Promise.all([
+                  fetch('/api/health'),
+                  fetch('/api/styles'),
+                  fetch('/api/config'),
+                  fetch('/api/credits'),
+              ]);
 
-          // 2. Sync System Config (Memory) - READ ONLY for Client
-          const configData = await safeSupabaseOp(() => supabase.from('system_config').select('*'));
-          
-          if (configData && configData.length > 0) {
-              console.log("📡 System Config loaded from Supabase:", configData);
+              const health = healthResponse.ok ? await healthResponse.json() : null;
+              setDbStatus(health?.storage === 'mongo' ? 'connected' : 'disconnected');
+              setConfigSource(health?.storage === 'mongo' ? 'mongo' : 'local');
+
+              const stylesPayload = stylesResponse.ok ? await stylesResponse.json() : null;
+              const remoteStyles = Array.isArray(stylesPayload?.styles) ? stylesPayload.styles : [];
+              if (remoteStyles.length > 0) {
+                  setDecorStyles(remoteStyles);
+              } else if (stylesPayload?.storage === 'mongo') {
+                  fetch('/api/styles/seed', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ styles: INITIAL_DECOR_STYLES }),
+                  }).catch((error) => console.warn('Mongo style seed failed', error));
+              }
+
+              const configPayload = configResponse.ok ? await configResponse.json() : null;
+              const configData = Array.isArray(configPayload?.config) ? configPayload.config : [];
               const newMemory = { ...DEFAULT_SYSTEM_MEMORY };
               let updated = false;
               configData.forEach((row: any) => {
@@ -719,22 +649,20 @@ export default function App() {
               
               if (updated) {
                   setSystemMemory(newMemory);
-                  setConfigSource('remote');
-                  setToastMessage("📡 Protocolos de Sistema Sincronizados com a Nuvem (Supabase)");
+                  setConfigSource('mongo');
+                  setToastMessage("📡 Protocolos de Sistema sincronizados com MongoDB");
                   setTimeout(() => setToastMessage(null), 5000);
-                  
-                  // Debug Logging
-                  console.group("🧠 SYSTEM MEMORY SYNCED");
-                  console.table(newMemory);
-                  console.groupEnd();
               }
-          } else {
-              console.warn("⚠️ System Config table empty or not accessible. Using Local Fallback.");
-              // WE DO NOT INSERT DEFAULT CONFIG HERE. 
-              // The frontend should NOT have write access to system laws.
+
+              const creditsPayload = creditsResponse.ok ? await creditsResponse.json() : null;
+              if (Number.isFinite(Number(creditsPayload?.credits))) setCredits(Number(creditsPayload.credits));
+          } catch (error) {
+              console.warn("Mongo API unavailable. Using local fallback.", error);
+              setDbStatus('disconnected');
+              setConfigSource('local');
+          } finally {
+              setLoadingStyles(false);
           }
-          
-          setLoadingStyles(false);
       };
       
       syncData();
@@ -751,19 +679,19 @@ export default function App() {
 
   const deductCredits = async (amount: number) => {
     if (credits < amount) { setShowPaywall(true); return false; }
-    
-    if (user && supabase && !supabaseDisabled.current) {
-        setCredits(c => c - amount);
-        try {
-            const { data: userDat } = await supabase.from('users').select('credits').eq('id', user.id).single();
-            if (userDat) {
-                const newCredits = Math.max(0, userDat.credits - amount);
-                await supabase.from('users').update({ credits: newCredits }).eq('id', user.id);
-            }
-        } catch (e) { console.warn("Credit sync failed", e); }
-    } else {
-        setCredits(c => c - amount);
-    }
+
+    setCredits(c => c - amount);
+    try {
+        const response = await fetch('/api/credits/deduct', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount }),
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (Number.isFinite(Number(data.credits))) setCredits(Number(data.credits));
+        }
+    } catch (e) { console.warn("Credit sync failed", e); }
     return true;
   };
 
@@ -1105,9 +1033,9 @@ export default function App() {
           </div>
           <div className="flex items-center gap-4">
              {/* DB STATUS LED */}
-             <Tooltip text={`Config: ${configSource === 'remote' ? 'Supabase Cloud' : 'Local Fallback'}`}>
+             <Tooltip text={`Config: ${configSource === 'mongo' ? 'MongoDB' : 'Fallback local'}`}>
                 <div className="flex items-center gap-2 text-xs font-mono mr-2 cursor-help transition-all hover:bg-[#f3e8ff] p-2 rounded">
-                    {configSource === 'remote' ? <Database className="w-3 h-3 text-blue-400"/> : <HardDrive className="w-3 h-3 text-[#85758a]"/>}
+                    {configSource === 'mongo' ? <Database className="w-3 h-3 text-blue-400"/> : <HardDrive className="w-3 h-3 text-[#85758a]"/>}
                     <div className={`w-2 h-2 rounded-full ${dbStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : dbStatus === 'checking' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`}></div>
                     <span className="hidden md:inline text-[#85758a] uppercase">{dbStatus === 'connected' ? 'Online' : dbStatus === 'checking' ? 'Connecting...' : 'Offline'}</span>
                 </div>

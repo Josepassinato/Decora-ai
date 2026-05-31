@@ -2,10 +2,18 @@ import { createServer } from 'node:http';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { MongoClient } from 'mongodb';
 
 const PORT = Number(process.env.PORT || 8018);
 const DATA_DIR = process.env.DECORA_DATA_DIR || path.join(process.cwd(), 'data');
 const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017';
+const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'decore_ai';
+const DEFAULT_CLIENT_ID = 'default';
+
+let mongoClient = null;
+let mongoDb = null;
+let mongoRetryAfter = 0;
 
 const PROVIDERS = [
   {
@@ -87,6 +95,129 @@ const writeProjects = async (projects) => {
   await fs.writeFile(PROJECTS_FILE, `${JSON.stringify(projects, null, 2)}\n`);
 };
 
+const getMongoDb = async () => {
+  if (mongoDb) return mongoDb;
+  if (Date.now() < mongoRetryAfter) return null;
+  try {
+    mongoClient = new MongoClient(MONGO_URI, {
+      serverSelectionTimeoutMS: 1500,
+      connectTimeoutMS: 1500,
+    });
+    await mongoClient.connect();
+    mongoDb = mongoClient.db(MONGO_DB_NAME);
+    await mongoDb.collection('projects').createIndex({ createdAt: -1 });
+    await mongoDb.collection('decor_styles').createIndex({ id: 1 }, { unique: true });
+    await mongoDb.collection('credits').createIndex({ clientId: 1 }, { unique: true });
+    return mongoDb;
+  } catch (error) {
+    mongoDb = null;
+    mongoClient = null;
+    mongoRetryAfter = Date.now() + 15000;
+    console.warn('MongoDB unavailable, using local fallback:', error.message || error);
+    return null;
+  }
+};
+
+const storageStatus = async () => {
+  const db = await getMongoDb();
+  return db ? 'mongo' : 'local';
+};
+
+const readStoredProjects = async () => {
+  const db = await getMongoDb();
+  if (!db) {
+    const projects = await readProjects();
+    return projects.slice().reverse();
+  }
+  const docs = await db.collection('projects')
+    .find({}, { projection: { _id: 0 } })
+    .sort({ createdAt: -1 })
+    .limit(100)
+    .toArray();
+  return docs;
+};
+
+const saveStoredProject = async (project) => {
+  const db = await getMongoDb();
+  if (!db) {
+    const projects = await readProjects();
+    projects.push(project);
+    await writeProjects(projects);
+    return project;
+  }
+  await db.collection('projects').insertOne(project);
+  return project;
+};
+
+const readStyles = async () => {
+  const db = await getMongoDb();
+  if (!db) return { storage: 'local', styles: [] };
+  const styles = await db.collection('decor_styles')
+    .find({}, { projection: { _id: 0 } })
+    .sort({ order: 1, id: 1 })
+    .toArray();
+  return { storage: 'mongo', styles };
+};
+
+const seedStyles = async (styles) => {
+  const db = await getMongoDb();
+  if (!db) return { storage: 'local', inserted: 0 };
+  const collection = db.collection('decor_styles');
+  const existing = await collection.estimatedDocumentCount();
+  if (existing > 0) return { storage: 'mongo', inserted: 0, existing };
+  const docs = (Array.isArray(styles) ? styles : [])
+    .filter((style) => style && style.id)
+    .map((style, index) => ({ ...style, order: index, updatedAt: new Date().toISOString() }));
+  if (!docs.length) return { storage: 'mongo', inserted: 0 };
+  const result = await collection.insertMany(docs, { ordered: false });
+  return { storage: 'mongo', inserted: result.insertedCount };
+};
+
+const readConfig = async () => {
+  const db = await getMongoDb();
+  if (!db) return { storage: 'local', config: [] };
+  const config = await db.collection('system_config')
+    .find({}, { projection: { _id: 0 } })
+    .sort({ key: 1 })
+    .toArray();
+  return { storage: 'mongo', config };
+};
+
+const getCredits = async (clientId = DEFAULT_CLIENT_ID) => {
+  const db = await getMongoDb();
+  if (!db) return { storage: 'local', clientId, credits: 1000 };
+  const collection = db.collection('credits');
+  const result = await collection.findOneAndUpdate(
+    { clientId },
+    { $setOnInsert: { clientId, credits: 1000, createdAt: new Date().toISOString() } },
+    { upsert: true, returnDocument: 'after', projection: { _id: 0 } },
+  );
+  const doc = result?.value || result || { clientId, credits: 1000 };
+  return { storage: 'mongo', ...doc };
+};
+
+const deductCredits = async (amount, clientId = DEFAULT_CLIENT_ID) => {
+  const db = await getMongoDb();
+  const safeAmount = Math.max(0, Number(amount || 0));
+  if (!db) return { storage: 'local', clientId, credits: null };
+  const collection = db.collection('credits');
+  await getCredits(clientId);
+  const result = await collection.findOneAndUpdate(
+    { clientId },
+    [
+      {
+        $set: {
+          credits: { $max: [0, { $subtract: ['$credits', safeAmount] }] },
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    ],
+    { returnDocument: 'after', projection: { _id: 0 } },
+  );
+  const doc = result?.value || result || { clientId, credits: 1000 };
+  return { storage: 'mongo', ...doc };
+};
+
 const isProviderUrl = (url, providerId) => {
   try {
     const host = new URL(url).hostname;
@@ -159,10 +290,33 @@ createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
     if (req.method === 'GET' && url.pathname === '/api/health') {
-      return json(res, 200, { ok: true, service: 'decora-api', timestamp: new Date().toISOString() });
+      return json(res, 200, {
+        ok: true,
+        service: 'decora-api',
+        storage: await storageStatus(),
+        database: MONGO_DB_NAME,
+        timestamp: new Date().toISOString(),
+      });
     }
     if (req.method === 'GET' && url.pathname === '/api/providers') {
       return json(res, 200, { providers: PROVIDERS });
+    }
+    if (req.method === 'GET' && url.pathname === '/api/styles') {
+      return json(res, 200, await readStyles());
+    }
+    if (req.method === 'POST' && url.pathname === '/api/styles/seed') {
+      const body = await readBody(req);
+      return json(res, 200, await seedStyles(body.styles));
+    }
+    if (req.method === 'GET' && url.pathname === '/api/config') {
+      return json(res, 200, await readConfig());
+    }
+    if (req.method === 'GET' && url.pathname === '/api/credits') {
+      return json(res, 200, await getCredits(url.searchParams.get('clientId') || DEFAULT_CLIENT_ID));
+    }
+    if (req.method === 'POST' && url.pathname === '/api/credits/deduct') {
+      const body = await readBody(req);
+      return json(res, 200, await deductCredits(body.amount, body.clientId || DEFAULT_CLIENT_ID));
     }
     if (req.method === 'POST' && url.pathname === '/api/catalog/validate') {
       const body = await readBody(req);
@@ -178,16 +332,14 @@ createServer(async (req, res) => {
       });
     }
     if (req.method === 'GET' && url.pathname === '/api/projects') {
-      const projects = await readProjects();
-      return json(res, 200, { projects: projects.slice().reverse() });
+      const projects = await readStoredProjects();
+      return json(res, 200, { storage: await storageStatus(), projects });
     }
     if (req.method === 'POST' && url.pathname === '/api/projects') {
       const body = await readBody(req);
-      const projects = await readProjects();
       const project = normalizeProject(body);
-      projects.push(project);
-      await writeProjects(projects);
-      return json(res, 201, { project });
+      await saveStoredProject(project);
+      return json(res, 201, { storage: await storageStatus(), project });
     }
     json(res, 404, { error: 'not_found' });
   } catch (error) {
