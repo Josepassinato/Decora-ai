@@ -3,6 +3,25 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { MongoClient } from 'mongodb';
+import { GoogleGenAI } from '@google/genai';
+
+const loadEnvFile = async () => {
+  try {
+    const raw = await fs.readFile(path.join(process.cwd(), '.env'), 'utf8');
+    raw.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) return;
+      const index = trimmed.indexOf('=');
+      const key = trimmed.slice(0, index).trim();
+      const value = trimmed.slice(index + 1).trim().replace(/^['"]|['"]$/g, '');
+      if (key && process.env[key] === undefined) process.env[key] = value;
+    });
+  } catch {
+    // .env is optional; production can provide process env directly.
+  }
+};
+
+await loadEnvFile();
 
 const PORT = Number(process.env.PORT || 8018);
 const DATA_DIR = process.env.DECORA_DATA_DIR || path.join(process.cwd(), 'data');
@@ -10,10 +29,12 @@ const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
 const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017';
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'decore_ai';
 const DEFAULT_CLIENT_ID = 'default';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
 
 let mongoClient = null;
 let mongoDb = null;
 let mongoRetryAfter = 0;
+let geminiClient = null;
 
 const PROVIDERS = [
   {
@@ -121,6 +142,25 @@ const getMongoDb = async () => {
 const storageStatus = async () => {
   const db = await getMongoDb();
   return db ? 'mongo' : 'local';
+};
+
+const getGeminiClient = () => {
+  if (!GEMINI_API_KEY) return null;
+  if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  return geminiClient;
+};
+
+const serializeGeminiResponse = (response) => ({
+  text: response?.text || '',
+  candidates: response?.candidates || [],
+  usageMetadata: response?.usageMetadata || null,
+});
+
+const geminiErrorMessage = (error) => {
+  const message = String(error?.message || error || 'Gemini request failed');
+  if (message.includes('reported as leaked')) return 'Gemini API key was rejected as leaked.';
+  if (message.includes('PERMISSION_DENIED')) return 'Gemini API key was rejected by Google.';
+  return message.slice(0, 500);
 };
 
 const readStoredProjects = async () => {
@@ -317,6 +357,33 @@ createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/credits/deduct') {
       const body = await readBody(req);
       return json(res, 200, await deductCredits(body.amount, body.clientId || DEFAULT_CLIENT_ID));
+    }
+    if (req.method === 'POST' && url.pathname === '/api/gemini/generate') {
+      const body = await readBody(req);
+      const client = getGeminiClient();
+      if (!client) {
+        return json(res, 503, {
+          error: 'gemini_not_configured',
+          message: 'Gemini API key is not configured on the server.',
+        });
+      }
+
+      const model = String(body.model || '');
+      if (!model.startsWith('gemini-')) {
+        return json(res, 400, { error: 'invalid_model', message: 'Invalid Gemini model.' });
+      }
+
+      try {
+        const response = await client.models.generateContent({
+          model,
+          contents: body.contents,
+          ...(body.config ? { config: body.config } : {}),
+        });
+        return json(res, 200, serializeGeminiResponse(response));
+      } catch (error) {
+        console.error('Gemini generation failed:', error?.message || error);
+        return json(res, 502, { error: 'gemini_error', message: geminiErrorMessage(error) });
+      }
     }
     if (req.method === 'POST' && url.pathname === '/api/catalog/validate') {
       const body = await readBody(req);

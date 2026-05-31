@@ -1,16 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback, type ReactNode, type FC } from 'react';
 import ReactDOM from 'react-dom/client';
 import { UploadCloud, Sofa, BedDouble, Baby, LampDesk, CookingPot, Bath, Wand2, PartyPopper, XCircle, FileText, Utensils, Tv, Shirt, Trees, DoorOpen, Waves, Bed, BedSingle, Clapperboard, CarFront, Flame, Umbrella, Building2, Briefcase, Stethoscope, Dumbbell, Coffee, Presentation, Gamepad2, Store, Download, FileDown, Coins, CreditCard, LogOut, Lock, ShieldCheck, CheckCircle2, ClipboardList, HardHat, Info, Rocket, Palette, Calendar, ExternalLink, Layers, Eye, ImagePlus, Camera, Maximize, PaintBucket, RefreshCw, Hexagon, Sparkles, ShoppingBag, HelpCircle, Globe, Stamp, Wifi, WifiOff, Database, HardDrive, Bell } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 import { loadStripe } from "@stripe/stripe-js";
 import { jsPDF } from "jspdf";
 
 // --- CONFIGURAÇÃO DE AMBIENTE ---
 
 const STRIPE_PUBLIC_KEY = "pk_live_51STX0AGP0hzTc9bmcPigXv82Tr0ee11AV3YFHpZZgvjq0JFvKUMZLHP4P2keTn2BhaPj90tTFNkw2N1iQXoSNqhU00K4M923KK"; 
-
-// A chave da API é injetada via process.env ou usa o fallback fornecido
-const GEMINI_API_KEY = process.env.API_KEY || 'AIzaSyChe9wkjloCxBBnsaYNCMLPQQXU6c-NkxA';
 
 // --- "THE VAULT": MEMÓRIA DE SISTEMA (FALLBACK/DEFAULT) ---
 const DEFAULT_SYSTEM_MEMORY = {
@@ -95,8 +91,8 @@ type WayfairBudgetItem = {
 
 const WAYFAIR_BASE_URL = 'https://www.wayfair.com';
 const WAYFAIR_SEARCH_URL = `${WAYFAIR_BASE_URL}/keyword.php`;
-const DECORE_DEMO_BEFORE = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4f9d?auto=format&fit=crop&w=900&q=80';
-const DECORE_DEMO_AFTER = 'https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&w=900&q=80';
+const DECORE_DEMO_BEFORE = '/assets/demo-room-before.svg';
+const DECORE_DEMO_AFTER = '/assets/demo-room-after.svg';
 
 const buildWayfairSearchUrl = (term: string) =>
   `${WAYFAIR_SEARCH_URL}?keyword=${encodeURIComponent(term.trim() || 'home decor')}`;
@@ -161,8 +157,20 @@ const extractJsonObject = (text: string) => {
   throw new Error('Wayfair response did not contain JSON.');
 };
 
+const generateGeminiContent = async (payload: any) => {
+  const response = await fetch('/api/gemini/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || data.error || 'Gemini generation failed');
+  }
+  return data;
+};
+
 const generateWayfairBudget = async (
-  ai: GoogleGenAI,
   params: {
     roomLabel: string;
     styleLabel: string;
@@ -204,7 +212,7 @@ Return ONLY valid JSON:
   ]
 }`;
 
-  const response = await ai.models.generateContent({
+  const response = await generateGeminiContent({
     model: 'gemini-2.5-flash',
     contents: prompt,
     config: { tools: [{ googleSearch: {} }] },
@@ -741,7 +749,6 @@ export default function App() {
     setIsGenerating(true);
     
     try {
-      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
       const room = ROOM_TYPES.find(r => r.id === selectedRoomId);
       const style = decorStyles.find(s => s.id === effectiveStyleId);
       const requestId = new Date().getTime();
@@ -769,7 +776,7 @@ export default function App() {
 	        Output only the raw prompt text.
 	      `;
 
-      const creativeRes = await ai.models.generateContent({
+      const creativeRes = await generateGeminiContent({
           model: 'gemini-2.5-flash',
           contents: creativePrompt
       });
@@ -795,7 +802,7 @@ export default function App() {
         Request ID: ${requestId}
       `;
       
-      const result = await ai.models.generateContent({
+      const result = await generateGeminiContent({
         model: 'gemini-2.5-flash-image',
         contents: {
           parts: [
@@ -818,7 +825,7 @@ export default function App() {
           
 	          if (!overrideMaterial) {
 	             setLoadingMessage(t.loading.report);
-	             const reportRes = await ai.models.generateContent({
+	             const reportRes = await generateGeminiContent({
 	                 model: 'gemini-2.5-flash',
 	                 contents: `Generate a 3 bullet point design report for: ${enhancedDescription}. Lang: ${lang}.`
 		             });
@@ -826,7 +833,7 @@ export default function App() {
 	          }
 	          setLoadingMessage("Curando lista de compras Wayfair...");
 	          setWayfairBudget([]);
-	          const wayfairResult = await generateWayfairBudget(ai, {
+	          const wayfairResult = await generateWayfairBudget({
 	              roomLabel: selectedRoomId === 'custom_commercial' ? customRoomType : ROOM_LABELS['en'][selectedRoomId],
 	              styleLabel: STYLE_LABELS['en'][effectiveStyleId],
 	              designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
@@ -856,7 +863,6 @@ export default function App() {
      setLoadingMessage(t.loading.tech);
      
      try {
-         const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
          const prompt = `
             ACT AS A SENIOR INTERIOR ARCHITECT.
 	            PROJECT: ${ROOM_LABELS['en'][selectedRoomId]} in ${STYLE_LABELS['en'][selectedStyleId]} style.
@@ -867,7 +873,7 @@ export default function App() {
 	            Include a short note that movable furniture/decor items were selected from Wayfair links/searches and must be checked for final availability before purchase.
 	            FORMAT: Plain text with headers.
 	         `;
-         const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+         const res = await generateGeminiContent({ model: 'gemini-2.5-flash', contents: prompt });
          setTechnicalBrief(res.text || "Briefing not available.");
          setIsApproved(true);
      } catch(e) { console.error(e); alert("Erro ao gerar briefing."); } finally { setIsGenerating(false); }
@@ -970,7 +976,6 @@ export default function App() {
 	      if (!generatedImage || !(await deductCredits(EXTRA_VIEWS_COST))) return;
 	      setIsGeneratingExtras(true);
       try {
-          const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
           const optimized = await resizeImage(generatedImage); 
           const base64 = optimized.split(',')[1];
           const views = [
@@ -980,7 +985,7 @@ export default function App() {
           ];
           const newExtras = [];
           for (const v of views) {
-              const res = await ai.models.generateContent({
+              const res = await generateGeminiContent({
                   model: 'gemini-2.5-flash-image',
                   contents: { parts: [{ inlineData: { mimeType: 'image/jpeg', data: base64 } }, { text: v.prompt }] }
               });
