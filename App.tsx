@@ -508,7 +508,7 @@ const ComparisonSlider: FC<{ before: string; after: string }> = ({ before, after
 
   return (
     <div 
-      className="relative w-full h-[400px] md:h-[600px] overflow-hidden rounded-xl cursor-ew-resize select-none border-4 border-stone-800 shadow-2xl group"
+      className="relative w-full h-[400px] md:h-[600px] overflow-hidden rounded-xl cursor-ew-resize select-none border-4 border-[#eadff2] shadow-2xl group"
       onMouseMove={handleMove} onTouchMove={handleMove}
     >
       <img src={after} className="absolute inset-0 w-full h-full object-cover" />
@@ -516,7 +516,7 @@ const ComparisonSlider: FC<{ before: string; after: string }> = ({ before, after
         <img src={before} className="absolute inset-0 w-full h-full object-cover" />
       </div>
       <div className="absolute top-1/2 -mt-4 -ml-4 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center" style={{ left: `${sliderPosition}%` }}>
-        <div className="w-1 h-4 bg-stone-800 rounded"></div>
+        <div className="w-1 h-4 bg-[#f3e8ff] rounded"></div>
       </div>
       <div className="absolute bottom-4 left-4 bg-black/60 text-white px-2 py-1 rounded text-xs">Antes</div>
       <div className="absolute bottom-4 right-4 bg-black/60 text-white px-2 py-1 rounded text-xs">Depois</div>
@@ -527,20 +527,20 @@ const ComparisonSlider: FC<{ before: string; after: string }> = ({ before, after
 const Spinner: FC<{ message: string }> = ({ message }) => (
   <div className="flex flex-col items-center justify-center p-12 text-center animate-fade-in">
     <div className="relative w-24 h-24 mb-6">
-      <div className="absolute inset-0 border-4 border-stone-800 rounded-full"></div>
-      <div className="absolute inset-0 border-4 border-amber-600 rounded-full border-t-transparent animate-spin"></div>
-      <Wand2 className="absolute inset-0 m-auto text-amber-600 w-8 h-8 animate-pulse" />
+      <div className="absolute inset-0 border-4 border-[#eadff2] rounded-full"></div>
+      <div className="absolute inset-0 border-4 border-[#7F187F] rounded-full border-t-transparent animate-spin"></div>
+      <Wand2 className="absolute inset-0 m-auto text-[#7F187F] w-8 h-8 animate-pulse" />
     </div>
-    <h3 className="text-xl font-bold text-stone-200">{message}</h3>
+    <h3 className="text-xl font-bold text-[#2f1a35]">{message}</h3>
   </div>
 );
 
 const Step: FC<{ number: number; title: string; isActive: boolean; isCompleted: boolean }> = ({ number, title, isActive, isCompleted }) => (
-  <div className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${isActive ? 'bg-stone-900 border border-stone-800' : 'opacity-60'}`}>
-    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isActive ? 'bg-amber-600 text-white' : isCompleted ? 'bg-green-600 text-white' : 'bg-stone-800 text-stone-500'}`}>
+  <div className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${isActive ? 'bg-white border border-[#eadff2]' : 'opacity-60'}`}>
+    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isActive ? 'bg-[#7F187F] text-white' : isCompleted ? 'bg-green-600 text-white' : 'bg-[#f3e8ff] text-[#85758a]'}`}>
       {isCompleted ? <CheckCircle2 size={16} /> : number}
     </div>
-    <span className={`font-medium ${isActive ? 'text-stone-100' : 'text-stone-500'}`}>{title}</span>
+    <span className={`font-medium ${isActive ? 'text-[#2f1a35]' : 'text-[#85758a]'}`}>{title}</span>
   </div>
 );
 
@@ -1084,11 +1084,11 @@ export default function App() {
 	  const wayfairTotal = wayfairBudget.reduce((sum, item) => sum + item.totalPrice, 0);
 
 	  return (
-    <div className="min-h-screen bg-stone-950 font-sans text-stone-200 pb-20 relative">
+    <div className="min-h-screen bg-[#f7f3fb] font-sans text-[#2f1a35] pb-20 relative">
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
           <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce-in">
-	              <div className="bg-amber-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-amber-500/50 backdrop-blur-md">
+	              <div className="bg-[#7F187F] text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-[#7F187F]/50 backdrop-blur-md">
 	                  <Wifi className="w-5 h-5 animate-pulse" />
 	                  <span className="font-bold text-sm tracking-wide">{toastMessage}</span>
 	              </div>
@@ -1096,29 +1096,29 @@ export default function App() {
 	      )}
 
       {/* HEADER */}
-      <header className="bg-stone-900/80 backdrop-blur border-b border-stone-800 sticky top-0 z-40">
+      <header className="bg-white/90 backdrop-blur border-b border-[#eadff2] sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="bg-stone-800 p-2 rounded border border-stone-700"><Hexagon className="text-amber-500 w-5 h-5"/></div>
+            <div className="bg-[#f3e8ff] p-2 rounded border border-[#dac7e5]"><Hexagon className="text-[#7F187F] w-5 h-5"/></div>
             B Home Concept
           </div>
           <div className="flex items-center gap-4">
              {/* DB STATUS LED */}
              <Tooltip text={`Config: ${configSource === 'remote' ? 'Supabase Cloud' : 'Local Fallback'}`}>
-                <div className="flex items-center gap-2 text-xs font-mono mr-2 cursor-help transition-all hover:bg-stone-800 p-2 rounded">
-                    {configSource === 'remote' ? <Database className="w-3 h-3 text-blue-400"/> : <HardDrive className="w-3 h-3 text-stone-500"/>}
+                <div className="flex items-center gap-2 text-xs font-mono mr-2 cursor-help transition-all hover:bg-[#f3e8ff] p-2 rounded">
+                    {configSource === 'remote' ? <Database className="w-3 h-3 text-blue-400"/> : <HardDrive className="w-3 h-3 text-[#85758a]"/>}
                     <div className={`w-2 h-2 rounded-full ${dbStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : dbStatus === 'checking' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`}></div>
-                    <span className="hidden md:inline text-stone-500 uppercase">{dbStatus === 'connected' ? 'Online' : dbStatus === 'checking' ? 'Connecting...' : 'Offline'}</span>
+                    <span className="hidden md:inline text-[#85758a] uppercase">{dbStatus === 'connected' ? 'Online' : dbStatus === 'checking' ? 'Connecting...' : 'Offline'}</span>
                 </div>
              </Tooltip>
 
-             <div className="flex bg-stone-800 rounded p-1">
+             <div className="flex bg-[#f3e8ff] rounded p-1">
                  {['pt','en','es'].map(l => (
-                     <button key={l} onClick={() => setLang(l as Language)} className={`px-2 text-xs font-bold rounded uppercase ${lang===l ? 'bg-amber-600 text-white' : 'text-stone-500'}`}>{l}</button>
+                     <button key={l} onClick={() => setLang(l as Language)} className={`px-2 text-xs font-bold rounded uppercase ${lang===l ? 'bg-[#7F187F] text-white' : 'text-[#85758a]'}`}>{l}</button>
                  ))}
              </div>
-             <div onClick={() => setShowPaywall(true)} className="flex items-center bg-stone-900 rounded-full px-3 py-1 border border-stone-800 cursor-pointer hover:bg-stone-800">
-                 <Coins className="w-4 h-4 text-amber-500 mr-2"/>
+             <div onClick={() => setShowPaywall(true)} className="flex items-center bg-white rounded-full px-3 py-1 border border-[#eadff2] cursor-pointer hover:bg-[#f3e8ff]">
+                 <Coins className="w-4 h-4 text-[#7F187F] mr-2"/>
                  <span className="font-bold text-sm">{credits}</span>
              </div>
           </div>
@@ -1141,11 +1141,11 @@ export default function App() {
            {isGenerating ? <Spinner message={loadingMessage} /> : (
                <>
                 {currentStep === 1 && (
-                    <div onClick={() => fileInputRef.current?.click()} className="bg-stone-900 rounded-2xl border-2 border-dashed border-stone-800 p-12 text-center hover:border-amber-600 cursor-pointer group">
+                    <div onClick={() => fileInputRef.current?.click()} className="bg-white rounded-2xl border-2 border-dashed border-[#eadff2] p-12 text-center hover:border-[#7F187F] cursor-pointer group">
                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload}/>
-                        <div className="w-20 h-20 bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform"><UploadCloud size={40} className="text-stone-500 group-hover:text-amber-500"/></div>
+                        <div className="w-20 h-20 bg-[#f3e8ff] rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform"><UploadCloud size={40} className="text-[#85758a] group-hover:text-[#7F187F]"/></div>
                         <h2 className="text-2xl font-bold mb-2">{t.upload.title}</h2>
-                        <p className="text-stone-400">{t.upload.subtitle}</p>
+                        <p className="text-[#6f6075]">{t.upload.subtitle}</p>
                     </div>
                 )}
 
@@ -1154,13 +1154,13 @@ export default function App() {
                         <h2 className="text-2xl font-bold">{t.roomSelect.title}</h2>
                         {['residential', 'commercial'].map(cat => (
                             <div key={cat} className="mb-6">
-                                <h3 className="text-sm font-bold text-stone-500 uppercase mb-4 flex items-center">
+                                <h3 className="text-sm font-bold text-[#85758a] uppercase mb-4 flex items-center">
                                     {cat === 'residential' ? <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> : <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>}
                                     {cat === 'residential' ? t.roomSelect.residential : t.roomSelect.commercial}
                                 </h3>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {ROOM_TYPES.filter(r => r.category === cat).map(r => (
-                                        <button key={r.id} onClick={() => setSelectedRoomId(r.id)} className={`flex flex-col items-center p-4 rounded-xl transition-all ${selectedRoomId===r.id ? 'bg-stone-800 text-amber-500 ring-2 ring-amber-600' : 'bg-stone-900 border border-stone-800 hover:border-amber-500/50'}`}>
+                                        <button key={r.id} onClick={() => setSelectedRoomId(r.id)} className={`flex flex-col items-center p-4 rounded-xl transition-all ${selectedRoomId===r.id ? 'bg-[#f3e8ff] text-[#7F187F] ring-2 ring-[#7F187F]' : 'bg-white border border-[#eadff2] hover:border-[#7F187F]/50'}`}>
                                             <r.icon size={32} className="mb-3"/>
                                             <span className="text-sm font-medium text-center">{ROOM_LABELS[lang][r.id] || r.id}</span>
                                         </button>
@@ -1169,17 +1169,17 @@ export default function App() {
                             </div>
                         ))}
                         {selectedRoomId === 'bedroom_kids' && (
-                             <div className="bg-stone-900 border border-stone-800 p-4 rounded-xl grid grid-cols-3 gap-4">
-                                 <input placeholder={t.kidsConfig.age} value={childAge} onChange={e=>setChildAge(e.target.value)} className="bg-stone-950 border border-stone-700 p-2 rounded text-white"/>
-                                 <input placeholder={t.kidsConfig.theme} value={childTheme} onChange={e=>setChildTheme(e.target.value)} className="bg-stone-950 border border-stone-700 p-2 rounded text-white"/>
-                                 <select value={childGender} onChange={e=>setChildGender(e.target.value)} className="bg-stone-950 border border-stone-700 p-2 rounded text-white">
+                             <div className="bg-white border border-[#eadff2] p-4 rounded-xl grid grid-cols-3 gap-4">
+                                 <input placeholder={t.kidsConfig.age} value={childAge} onChange={e=>setChildAge(e.target.value)} className="bg-[#f7f3fb] border border-[#dac7e5] p-2 rounded text-[#2f1a35]"/>
+                                 <input placeholder={t.kidsConfig.theme} value={childTheme} onChange={e=>setChildTheme(e.target.value)} className="bg-[#f7f3fb] border border-[#dac7e5] p-2 rounded text-[#2f1a35]"/>
+                                 <select value={childGender} onChange={e=>setChildGender(e.target.value)} className="bg-[#f7f3fb] border border-[#dac7e5] p-2 rounded text-[#2f1a35]">
                                      <option value="neutral">{t.kidsConfig.neutral}</option>
                                      <option value="boy">{t.kidsConfig.boy}</option>
                                      <option value="girl">{t.kidsConfig.girl}</option>
                                  </select>
                              </div>
                         )}
-                        <div className="flex justify-end"><button onClick={() => setCurrentStep(3)} className="bg-amber-600 px-8 py-3 rounded-xl font-bold text-white hover:bg-amber-700">{t.roomSelect.next}</button></div>
+                        <div className="flex justify-end"><button onClick={() => setCurrentStep(3)} className="bg-[#7F187F] px-8 py-3 rounded-xl font-bold text-white hover:bg-[#651365]">{t.roomSelect.next}</button></div>
                     </div>
                 )}
 
@@ -1187,14 +1187,14 @@ export default function App() {
                     <div className="space-y-6 animate-fade-in">
                         <div className="flex justify-between items-center">
                             <h2 className="text-2xl font-bold">{t.styleSelect.title}</h2>
-	                            <span className="bg-stone-900 px-3 py-1 rounded text-sm text-stone-400">{t.styleSelect.cost}: {GENERATION_COST}</span>
+	                            <span className="bg-white px-3 py-1 rounded text-sm text-[#6f6075]">{t.styleSelect.cost}: {GENERATION_COST}</span>
 	                        </div>
-	                        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5">
+	                        <div className="bg-white border border-[#eadff2] rounded-2xl p-5">
 	                            <div className="flex items-center gap-2 mb-4">
-	                                <Store className="w-5 h-5 text-amber-500" />
+	                                <Store className="w-5 h-5 text-[#7F187F]" />
 	                                <div>
-	                                    <h3 className="font-black text-stone-100">Fornecedor do orçamento</h3>
-	                                    <p className="text-xs text-stone-500">Nesta versão, a decoração comprável fica travada no fornecedor ativo.</p>
+	                                    <h3 className="font-black text-[#2f1a35]">Fornecedor do orçamento</h3>
+	                                    <p className="text-xs text-[#85758a]">Nesta versão, a decoração comprável fica travada no fornecedor ativo.</p>
 	                                </div>
 	                            </div>
 	                            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
@@ -1203,7 +1203,7 @@ export default function App() {
 	                                        key={provider.id}
 	                                        onClick={() => provider.status === 'active' && setSelectedProviderId(provider.id)}
 	                                        disabled={provider.status !== 'active'}
-	                                        className={`text-left rounded-xl border p-3 transition-all ${selectedProviderId === provider.id ? 'bg-amber-600/10 border-amber-500 text-amber-300' : 'bg-stone-950 border-stone-800 text-stone-400'} ${provider.status !== 'active' ? 'opacity-45 cursor-not-allowed' : 'hover:border-amber-500/70'}`}
+	                                        className={`text-left rounded-xl border p-3 transition-all ${selectedProviderId === provider.id ? 'bg-[#7F187F]/10 border-[#7F187F] text-[#7F187F]' : 'bg-[#f7f3fb] border-[#eadff2] text-[#6f6075]'} ${provider.status !== 'active' ? 'opacity-45 cursor-not-allowed' : 'hover:border-[#7F187F]'}`}
 	                                    >
 	                                        <div className="font-black text-sm">{provider.name}</div>
 	                                        <div className="text-[10px] uppercase font-bold mt-1">{provider.status === 'active' ? 'ativo' : 'em breve'}</div>
@@ -1217,37 +1217,37 @@ export default function App() {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {decorStyles.map(s => (
                                     <Tooltip key={s.id} text={s.prompt_modifier}>
-                                        <button onClick={() => setSelectedStyleId(s.id)} className={`relative aspect-video rounded-xl overflow-hidden border bg-stone-800 ${selectedStyleId===s.id ? 'ring-2 ring-amber-500' : 'border-stone-800 hover:scale-105'} transition-all`}>
+                                        <button onClick={() => setSelectedStyleId(s.id)} className={`relative aspect-video rounded-xl overflow-hidden border bg-[#f3e8ff] ${selectedStyleId===s.id ? 'ring-2 ring-[#7F187F]' : 'border-[#eadff2] hover:scale-105'} transition-all`}>
                                             <img src={s.thumb} className="w-full h-full object-cover opacity-60 hover:opacity-100" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/300?text=Style'; }}/>
                                             <div className="absolute bottom-0 left-0 w-full p-2 bg-black/60 font-bold text-sm text-white z-10">{STYLE_LABELS[lang][s.id] || s.id}</div>
-                                            {selectedStyleId === s.id && <div className="absolute top-2 right-2 bg-amber-600 text-white rounded-full p-1 z-10"><CheckCircle2 size={16}/></div>}
+                                            {selectedStyleId === s.id && <div className="absolute top-2 right-2 bg-[#7F187F] text-white rounded-full p-1 z-10"><CheckCircle2 size={16}/></div>}
                                         </button>
                                     </Tooltip>
                                 ))}
                             </div>
                         )}
-                        <div className="flex justify-end"><button onClick={() => generateDecoration()} disabled={loadingStyles} className="bg-amber-600 px-10 py-4 rounded-xl font-bold text-white hover:bg-amber-700 shadow-lg flex items-center disabled:opacity-50"><Wand2 className="mr-2"/> {t.styleSelect.generate}</button></div>
+                        <div className="flex justify-end"><button onClick={() => generateDecoration()} disabled={loadingStyles} className="bg-[#7F187F] px-10 py-4 rounded-xl font-bold text-white hover:bg-[#651365] shadow-lg flex items-center disabled:opacity-50"><Wand2 className="mr-2"/> {t.styleSelect.generate}</button></div>
                     </div>
                 )}
 
                 {currentStep === 4 && generatedImage && selectedImage && (
                     <div className="space-y-8 animate-fade-in">
                         <div className="text-center">
-                            <h2 className="text-3xl font-bold text-stone-100">{t.results.title}</h2>
-                            <p className="text-stone-400">{t.results.subtitle}</p>
+                            <h2 className="text-3xl font-bold text-[#2f1a35]">{t.results.title}</h2>
+                            <p className="text-[#6f6075]">{t.results.subtitle}</p>
                         </div>
 
 	                        <ComparisonSlider before={selectedImage} after={generatedImage} />
 
 	                        {/* WAYFAIR PROCUREMENT BUDGET */}
-	                        <div className="bg-stone-900 border border-amber-700/30 rounded-2xl overflow-hidden shadow-xl">
-	                            <div className="p-5 border-b border-stone-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+	                        <div className="bg-white border border-[#D57DEA]/40 rounded-2xl overflow-hidden shadow-xl">
+	                            <div className="p-5 border-b border-[#eadff2] flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 	                                <div>
-	                                    <div className="flex items-center gap-2 text-amber-500 font-black uppercase tracking-wide text-sm">
+	                                    <div className="flex items-center gap-2 text-[#7F187F] font-black uppercase tracking-wide text-sm">
 	                                        <ShoppingBag className="w-4 h-4" />
 	                                        Wayfair Shopping List
 	                                    </div>
-	                                    <p className="text-stone-400 text-sm mt-1">
+	                                    <p className="text-[#6f6075] text-sm mt-1">
 	                                        Itens móveis e decoração limitados à Wayfair, com link direto ou busca validável na loja.
 	                                    </p>
 	                                </div>
@@ -1255,45 +1255,45 @@ export default function App() {
 	                                    <button
 	                                        onClick={saveCommercialProject}
 	                                        disabled={savingProject || wayfairBudget.length === 0}
-	                                        className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white px-4 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"
+	                                        className="bg-[#7F187F] hover:bg-[#651365] disabled:opacity-50 text-white px-4 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"
 	                                    >
 	                                        <ClipboardList className="w-4 h-4" />
 	                                        {savingProject ? 'Salvando...' : 'Salvar proposta'}
 	                                    </button>
-	                                    <div className="bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-right">
-	                                        <p className="text-[10px] text-stone-500 uppercase font-bold">Total estimado</p>
-	                                        <p className="text-2xl text-amber-500 font-black">{toMoney(wayfairTotal)}</p>
+	                                    <div className="bg-[#f7f3fb] border border-[#eadff2] rounded-xl px-4 py-3 text-right">
+	                                        <p className="text-[10px] text-[#85758a] uppercase font-bold">Total estimado</p>
+	                                        <p className="text-2xl text-[#7F187F] font-black">{toMoney(wayfairTotal)}</p>
 	                                    </div>
 	                                </div>
 	                            </div>
 	                            {projectSaveMessage && (
-	                                <div className="mx-5 mb-4 rounded-lg border border-stone-800 bg-stone-950 px-4 py-2 text-xs text-stone-300">
+	                                <div className="mx-5 mb-4 rounded-lg border border-[#eadff2] bg-[#f7f3fb] px-4 py-2 text-xs text-[#4b3650]">
 	                                    {projectSaveMessage}
 	                                </div>
 	                            )}
-	                            <div className="divide-y divide-stone-800">
+	                            <div className="divide-y divide-[#eadff2]">
 	                                {wayfairBudget.length > 0 ? wayfairBudget.map((item, index) => (
 	                                    <div key={`${item.name}-${index}`} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
 	                                        <div className="min-w-0">
 	                                            <div className="flex flex-wrap items-center gap-2">
-	                                                <span className="text-xs bg-stone-800 text-stone-300 px-2 py-1 rounded font-bold">{item.category}</span>
-	                                                <span className={`text-[10px] px-2 py-1 rounded uppercase font-black ${item.validation === 'direct_product' ? 'bg-green-900/40 text-green-400' : 'bg-amber-900/40 text-amber-300'}`}>
+	                                                <span className="text-xs bg-[#f3e8ff] text-[#4b3650] px-2 py-1 rounded font-bold">{item.category}</span>
+	                                                <span className={`text-[10px] px-2 py-1 rounded uppercase font-black ${item.validation === 'direct_product' ? 'bg-[#e9f8ee] text-[#1f7a3f]' : 'bg-[#f3e8ff] text-[#7F187F]'}`}>
 	                                                    {item.validation === 'direct_product' ? 'produto Wayfair' : 'busca Wayfair'}
 	                                                </span>
 	                                            </div>
-	                                            <h3 className="font-bold text-stone-100 mt-2">{item.quantity}x {item.name}</h3>
-	                                            {item.note && <p className="text-xs text-stone-500 mt-1">{item.note}</p>}
+	                                            <h3 className="font-bold text-[#2f1a35] mt-2">{item.quantity}x {item.name}</h3>
+	                                            {item.note && <p className="text-xs text-[#85758a] mt-1">{item.note}</p>}
 	                                        </div>
 	                                        <div className="flex items-center gap-3 shrink-0">
 	                                            <div className="text-right">
-	                                                <p className="font-black text-stone-100">{toMoney(item.totalPrice)}</p>
-	                                                <p className="text-xs text-stone-500">{toMoney(item.unitPrice)} un.</p>
+	                                                <p className="font-black text-[#2f1a35]">{toMoney(item.totalPrice)}</p>
+	                                                <p className="text-xs text-[#85758a]">{toMoney(item.unitPrice)} un.</p>
 	                                            </div>
 	                                            <a
 	                                                href={item.url}
 	                                                target="_blank"
 	                                                rel="noopener noreferrer"
-	                                                className="bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-lg p-3 text-amber-400"
+	                                                className="bg-[#f3e8ff] hover:bg-[#eadff2] border border-[#dac7e5] rounded-lg p-3 text-[#7F187F]"
 	                                                title="Abrir na Wayfair"
 	                                            >
 	                                                <ExternalLink className="w-4 h-4" />
@@ -1301,23 +1301,23 @@ export default function App() {
 	                                        </div>
 	                                    </div>
 	                                )) : (
-	                                    <div className="p-5 text-sm text-stone-400">
+	                                    <div className="p-5 text-sm text-[#6f6075]">
 	                                        A lista Wayfair ainda não foi gerada. Gere novamente a transformação para criar o orçamento por itens da loja.
 	                                    </div>
 	                                )}
 	                            </div>
 	                            {wayfairBudgetNote && (
-	                                <div className="p-4 bg-stone-950/70 text-xs text-stone-500 border-t border-stone-800">
+	                                <div className="p-4 bg-[#f7f3fb]/70 text-xs text-[#85758a] border-t border-[#eadff2]">
 	                                    {wayfairBudgetNote}
 	                                </div>
 	                            )}
 	                        </div>
 	                        
 	                        {/* FLUXO DE APROVAÇÃO (BOTÃO AUTORIZAR) */}
-                        <div className="flex flex-col items-center gap-4 bg-stone-900 p-6 rounded-2xl border border-stone-800 shadow-xl">
+                        <div className="flex flex-col items-center gap-4 bg-white p-6 rounded-2xl border border-[#eadff2] shadow-xl">
                             {!isApproved ? (
                                 <div className="text-center w-full">
-                                    <p className="text-stone-400 mb-4 text-sm">Gostou do resultado? Autorize para gerar o Briefing Técnico para execução.</p>
+                                    <p className="text-[#6f6075] mb-4 text-sm">Gostou do resultado? Autorize para gerar o Briefing Técnico para execução.</p>
                                     <div className="flex justify-center gap-4">
                                         <button 
                                             onClick={handleAuthorizeProject} 
@@ -1325,7 +1325,7 @@ export default function App() {
                                         >
                                             <CheckCircle2 className="mr-2 w-6 h-6"/> {t.results.authorize} <span className="text-xs bg-green-800 ml-2 px-2 py-0.5 rounded">-{TECH_REPORT_COST} cr</span>
                                         </button>
-                                        <button onClick={handleNewProject} className="bg-stone-800 px-6 py-4 rounded-xl font-bold hover:bg-stone-700 text-stone-300 border border-stone-700">
+                                        <button onClick={handleNewProject} className="bg-[#f3e8ff] px-6 py-4 rounded-xl font-bold hover:bg-[#eadff2] text-[#4b3650] border border-[#dac7e5]">
                                             {t.results.restart}
                                         </button>
                                     </div>
@@ -1337,13 +1337,13 @@ export default function App() {
                                     </div>
                                     <button 
                                         onClick={downloadBriefingPDF} 
-                                        className="bg-stone-100 text-stone-900 px-8 py-3 rounded-xl font-bold flex items-center hover:bg-white transition-all shadow-lg border border-stone-200"
+                                        className="bg-[#f3e8ff] text-[#2f1a35] px-8 py-3 rounded-xl font-bold flex items-center hover:bg-white transition-all shadow-lg border border-[#eadff2]"
                                     >
                                         <FileDown className="mr-2 w-5 h-5"/> {t.results.downloadPdf}
                                     </button>
                                     <button 
                                         onClick={() => {const l = document.createElement('a'); l.href=generatedImage; l.download='BHome_Render.jpg'; l.click()}} 
-                                        className="bg-stone-800 text-stone-300 px-6 py-3 rounded-xl font-bold flex items-center hover:bg-stone-700 border border-stone-700"
+                                        className="bg-[#f3e8ff] text-[#4b3650] px-6 py-3 rounded-xl font-bold flex items-center hover:bg-[#eadff2] border border-[#dac7e5]"
                                     >
                                         <Download className="mr-2 w-5 h-5"/> {t.results.download}
                                     </button>
@@ -1352,9 +1352,9 @@ export default function App() {
                         </div>
 
                         {/* MATERIAL SWITCHER */}
-                        <div className="bg-stone-900/50 border border-stone-800 p-6 rounded-xl">
-                            <h3 className="font-bold mb-4 flex items-center text-stone-100">
-                                <PaintBucket className="w-4 h-4 mr-2 text-amber-500"/> {t.results.materialTitle}
+                        <div className="bg-white/80 border border-[#eadff2] p-6 rounded-xl">
+                            <h3 className="font-bold mb-4 flex items-center text-[#2f1a35]">
+                                <PaintBucket className="w-4 h-4 mr-2 text-[#7F187F]"/> {t.results.materialTitle}
                             </h3>
                             <div className="flex gap-2">
                                 <input 
@@ -1362,27 +1362,27 @@ export default function App() {
                                     value={customMaterial}
                                     onChange={(e) => setCustomMaterial(e.target.value)}
                                     placeholder={t.results.materialPlaceholder}
-                                    className="flex-1 bg-stone-950 border border-stone-700 rounded-lg px-4 py-3 focus:outline-none focus:border-amber-500 transition-colors"
+                                    className="flex-1 bg-[#f7f3fb] border border-[#dac7e5] rounded-lg px-4 py-3 focus:outline-none focus:border-[#7F187F] transition-colors"
                                 />
                                 <button 
                                     onClick={() => generateDecoration(customMaterial)}
-                                    className="bg-stone-800 hover:bg-stone-700 text-white px-6 py-3 rounded-lg font-bold transition-colors border border-stone-700"
+                                    className="bg-[#7F187F] hover:bg-[#651365] text-white px-6 py-3 rounded-lg font-bold transition-colors border border-[#7F187F]"
                                 >
                                     {t.results.updateBtn}
                                 </button>
                             </div>
-                            <p className="text-xs text-stone-500 mt-2 ml-1">{t.results.materialSub}</p>
+                            <p className="text-xs text-[#85758a] mt-2 ml-1">{t.results.materialSub}</p>
                         </div>
                         
                          {/* EXTRA VIEWS */}
-                         <div className="border-t border-stone-800 pt-6">
+                         <div className="border-t border-[#eadff2] pt-6">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-bold flex items-center"><Layers className="mr-2 text-stone-400 w-5 h-5"/> {t.results.extraViewsTitle}</h3>
-                                <button onClick={generateExtraViews} disabled={isGeneratingExtras} className="text-xs bg-stone-800 px-3 py-1 rounded text-stone-300 hover:bg-stone-700">{isGeneratingExtras ? t.results.generatingAngles : t.results.generateAngles}</button>
+                                <h3 className="font-bold flex items-center"><Layers className="mr-2 text-[#6f6075] w-5 h-5"/> {t.results.extraViewsTitle}</h3>
+                                <button onClick={generateExtraViews} disabled={isGeneratingExtras} className="text-xs bg-[#f3e8ff] px-3 py-1 rounded text-[#4b3650] hover:bg-[#eadff2]">{isGeneratingExtras ? t.results.generatingAngles : t.results.generateAngles}</button>
                             </div>
 	                            <div className="grid grid-cols-3 gap-4">
 	                                {extraImages.map((img, i) => (
-	                                    <div key={i} className="relative rounded-lg overflow-hidden border border-stone-800 group">
+	                                    <div key={i} className="relative rounded-lg overflow-hidden border border-[#eadff2] group">
 	                                        <img src={img.url} className="w-full h-32 object-cover"/>
 	                                        <div className="absolute bottom-0 bg-black/60 w-full p-1 text-[10px] text-center">{img.label}</div>
 	                                        <button onClick={() => {const l=document.createElement('a'); l.href=img.url; l.download=`View_${i}.jpg`; l.click()}} className="absolute top-1 right-1 bg-black/50 p-1 rounded hover:bg-white/20 hidden group-hover:block"><Download size={12}/></button>
@@ -1391,18 +1391,18 @@ export default function App() {
 	                            </div>
 	                         </div>
 	                         {savedProjects.length > 0 && (
-	                            <div className="border-t border-stone-800 pt-6">
+	                            <div className="border-t border-[#eadff2] pt-6">
 	                                <h3 className="font-bold flex items-center mb-4">
-	                                    <ClipboardList className="mr-2 text-stone-400 w-5 h-5" />
+	                                    <ClipboardList className="mr-2 text-[#6f6075] w-5 h-5" />
 	                                    Histórico comercial
 	                                </h3>
 	                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 	                                    {savedProjects.slice(0, 3).map(project => (
-	                                        <div key={project.id} className="bg-stone-900 border border-stone-800 rounded-xl p-4">
-	                                            <p className="text-xs text-stone-500">{new Date(project.createdAt).toLocaleDateString()}</p>
-	                                            <h4 className="font-black text-stone-100 mt-1">{project.room || 'Ambiente'}</h4>
-	                                            <p className="text-xs text-stone-400">{project.style || 'Estilo'} • {project.providerName}</p>
-	                                            <p className="text-amber-500 font-black mt-2">{toMoney(Number(project.total || 0))}</p>
+	                                        <div key={project.id} className="bg-white border border-[#eadff2] rounded-xl p-4">
+	                                            <p className="text-xs text-[#85758a]">{new Date(project.createdAt).toLocaleDateString()}</p>
+	                                            <h4 className="font-black text-[#2f1a35] mt-1">{project.room || 'Ambiente'}</h4>
+	                                            <p className="text-xs text-[#6f6075]">{project.style || 'Estilo'} • {project.providerName}</p>
+	                                            <p className="text-[#7F187F] font-black mt-2">{toMoney(Number(project.total || 0))}</p>
 	                                        </div>
 	                                    ))}
 	                                </div>
@@ -1418,16 +1418,16 @@ export default function App() {
       {/* PAYWALL MODAL */}
       {showPaywall && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-              <div className="bg-stone-900 max-w-2xl w-full rounded-2xl border border-stone-800 p-8 relative">
-                  <button onClick={() => setShowPaywall(false)} className="absolute top-4 right-4 text-stone-500 hover:text-white"><XCircle/></button>
-                  <h2 className="text-2xl font-bold text-amber-500 mb-2">{t.paywall.title}</h2>
-                  <p className="text-stone-400 mb-6">{t.paywall.subtitle}</p>
+              <div className="bg-white max-w-2xl w-full rounded-2xl border border-[#eadff2] p-8 relative">
+                  <button onClick={() => setShowPaywall(false)} className="absolute top-4 right-4 text-[#85758a] hover:text-[#2f1a35]"><XCircle/></button>
+                  <h2 className="text-2xl font-bold text-[#7F187F] mb-2">{t.paywall.title}</h2>
+                  <p className="text-[#6f6075] mb-6">{t.paywall.subtitle}</p>
                   <div className="grid grid-cols-3 gap-4">
                       {[{l:'Starter',c:50,p:25},{l:'Pro',c:120,p:50,pop:true},{l:'Agency',c:300,p:100}].map(pk => (
-                          <div key={pk.l} onClick={() => alert("Stripe Integration Mock: Redirecting...")} className={`border rounded-xl p-4 cursor-pointer hover:border-amber-600 ${pk.pop ? 'bg-stone-800 border-amber-600 ring-1 ring-amber-600' : 'bg-stone-950 border-stone-800'}`}>
+                          <div key={pk.l} onClick={() => alert("Stripe Integration Mock: Redirecting...")} className={`border rounded-xl p-4 cursor-pointer hover:border-[#7F187F] ${pk.pop ? 'bg-[#f3e8ff] border-[#7F187F] ring-1 ring-[#7F187F]' : 'bg-[#f7f3fb] border-[#eadff2]'}`}>
                               <h3 className="font-bold text-lg">{pk.l}</h3>
-                              <div className="text-2xl font-bold my-2">{pk.c} <span className="text-xs text-stone-500">cr</span></div>
-                              <button className="w-full bg-stone-700 py-2 rounded text-xs font-bold mt-2 hover:bg-stone-600">${pk.p}</button>
+                              <div className="text-2xl font-bold my-2">{pk.c} <span className="text-xs text-[#85758a]">cr</span></div>
+                              <button className="w-full bg-[#7F187F] text-white py-2 rounded text-xs font-bold mt-2 hover:bg-[#651365]">${pk.p}</button>
                           </div>
                       ))}
                   </div>
