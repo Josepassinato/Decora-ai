@@ -148,6 +148,35 @@ const PRODUCT_PROVIDERS = [
   { id: 'manual-catalog', name: 'Catalogo manual', status: 'planned', note: 'Lojas sem catalogo publico, como HomeSense.' },
 ];
 
+const STYLE_GRADIENTS: Record<string, string> = {
+  modern: 'from-[#2f1a35] via-[#7f187f] to-[#f2d2a9]',
+  industrial: 'from-[#252525] via-[#5d4d43] to-[#c0834b]',
+  scandinavian: 'from-[#f8f5f2] via-[#d8c8b5] to-[#91a3a8]',
+  luxury_italian: 'from-[#28172b] via-[#7f187f] to-[#d4af37]',
+  brazilian_modernism: 'from-[#533d2e] via-[#b98552] to-[#3d7f5c]',
+  japandi: 'from-[#efe6d6] via-[#8f7d6b] to-[#2e3a35]',
+  biophilic: 'from-[#183f2b] via-[#4f9d69] to-[#d8c8b5]',
+  mid_century: 'from-[#4f3626] via-[#a26735] to-[#d5a021]',
+  mediterranean: 'from-[#efe1cc] via-[#c9805a] to-[#477b93]',
+  neoclassical: 'from-[#f4edf5] via-[#d7bfdc] to-[#8e6d3f]',
+  boho: 'from-[#8f5035] via-[#d19068] to-[#f2d7a5]',
+  farmhouse: 'from-[#f7f2eb] via-[#9f8d7b] to-[#222222]',
+  minimalist: 'from-[#fff8ef] via-[#dfcfbd] to-[#a88f74]',
+  art_deco: 'from-[#13251f] via-[#087262] to-[#d4af37]',
+  cyberpunk: 'from-[#111827] via-[#7f187f] to-[#00d4ff]',
+  coastal: 'from-[#f8fbfb] via-[#bddbea] to-[#2f6f91]',
+  maximalist: 'from-[#2f1a35] via-[#c24183] to-[#facc15]',
+  wabi_sabi: 'from-[#d6c3ad] via-[#8a7564] to-[#4d4138]',
+  transitional: 'from-[#f7f0e9] via-[#b79d84] to-[#38516b]',
+  classic: 'from-[#3e2418] via-[#7a4629] to-[#d5b268]',
+  vintage: 'from-[#6b3a1f] via-[#d97706] to-[#667a3a]',
+  rustic: 'from-[#3c2f25] via-[#8a5a36] to-[#d6b58a]',
+  zen: 'from-[#e8dfd1] via-[#81936a] to-[#33443a]',
+  eclectic: 'from-[#3b2251] via-[#dd7f4f] to-[#5aa6a6]',
+};
+
+const styleGradientFor = (id: string) => STYLE_GRADIENTS[id] || 'from-[#2f1a35] via-[#7f187f] to-[#f2d2a9]';
+
 const extractJsonObject = (text: string) => {
   const fenced = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
   if (fenced?.[1]) return fenced[1];
@@ -1221,7 +1250,10 @@ export default function App() {
                                 {decorStyles.map(s => (
                                     <Tooltip key={s.id} text={s.prompt_modifier}>
                                         <button onClick={() => setSelectedStyleId(s.id)} className={`relative aspect-video rounded-xl overflow-hidden border bg-[#f3e8ff] ${selectedStyleId===s.id ? 'ring-2 ring-[#7F187F]' : 'border-[#eadff2] hover:scale-105'} transition-all`}>
-                                            <img src={s.thumb} className="w-full h-full object-cover opacity-60 hover:opacity-100" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/300?text=Style'; }}/>
+                                            <div className={`absolute inset-0 bg-gradient-to-br ${styleGradientFor(s.id)} opacity-85`}></div>
+                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.45),transparent_28%),radial-gradient(circle_at_74%_72%,rgba(255,255,255,0.24),transparent_32%)]"></div>
+                                            <div className="absolute left-4 top-4 h-10 w-16 rounded-md border border-white/50 bg-white/25"></div>
+                                            <div className="absolute right-4 bottom-9 h-7 w-20 rounded-full bg-white/20"></div>
                                             <div className="absolute bottom-0 left-0 w-full p-2 bg-black/60 font-bold text-sm text-white z-10">{STYLE_LABELS[lang][s.id] || s.id}</div>
                                             {selectedStyleId === s.id && <div className="absolute top-2 right-2 bg-[#7F187F] text-white rounded-full p-1 z-10"><CheckCircle2 size={16}/></div>}
                                         </button>
