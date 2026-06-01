@@ -38,7 +38,7 @@ let stripePromise: any = null;
 
 try {
     if (STRIPE_PUBLIC_KEY) stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
-    console.log("🚀 wayDecor.12Brain.org: serviços do cliente inicializados.");
+    console.log("🚀 WayDecor: serviços do cliente inicializados.");
 } catch (e) {
     console.error("Erro crítico na inicialização dos serviços:", e);
 }
@@ -272,7 +272,7 @@ const TRANSLATIONS = {
   pt: {
     nav: { store: "Loja", login: "Entrar", credits: "créditos" },
     steps: { upload: "Foto do ambiente", room: "Cômodo", style: "Estilo", project: "Projeto e orçamento" },
-    upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera", heroEyebrow: "Design com IA + lista de compra", heroTitle: "Decore seu ambiente com peças reais para comprar", heroSubtitle: "A wayDecor.12Brain.org transforma uma foto em uma proposta visual, preserva a estrutura do espaço e monta um orçamento item por item com produtos pesquisáveis na Wayfair.", featureDesign: "Imagem de encantamento", featureBudget: "Orçamento comprável", featureStructure: "Sem mexer na estrutura", demoBefore: "ambiente original", demoAfter: "visão projetada", procurementNote: "a proposta final separa móveis, iluminação, tapetes e decoração em uma lista de compra validável." },
+    upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera", heroEyebrow: "Design com IA + lista de compra", heroTitle: "Decore seu ambiente com peças reais para comprar", heroSubtitle: "A WayDecor transforma uma foto em uma proposta visual, preserva a estrutura do espaço e monta um orçamento item por item com produtos pesquisáveis na Wayfair.", featureDesign: "Imagem de encantamento", featureBudget: "Orçamento comprável", featureStructure: "Sem mexer na estrutura", demoBefore: "ambiente original", demoAfter: "visão projetada", procurementNote: "a proposta final separa móveis, iluminação, tapetes e decoração em uma lista de compra validável." },
     roomSelect: { title: "Qual ambiente vamos transformar?", residential: "Residencial", commercial: "Comercial & Corporativo", next: "Próximo", customLabel: "Descreva seu ambiente:", customPlaceholder: "Ex: consultório pequeno, varanda gourmet, loja de roupas...", customRoom: "Descrever ambiente", autoRoom: "IA reconhece o ambiente", autoRoomHint: "A Luna identifica o cômodo pela foto e decora conforme o reconhecimento." },
     kidsConfig: { title: "Configuração do Quarto Infantil", age: "Idade", theme: "Tema", themePlaceholder: "Ex: Dinossauros...", gender: "Gênero", select: "Selecione...", boy: "Menino", girl: "Menina", neutral: "Neutro" },
     styleSelect: { title: "Escolha o estilo ideal", cost: "Custo", generate: "Gerar Transformação" },
@@ -294,7 +294,7 @@ const TRANSLATIONS = {
   en: {
     nav: { store: "Store", login: "Login", credits: "credits" },
     steps: { upload: "Room photo", room: "Room", style: "Style", project: "Project and budget" },
-    upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera", heroEyebrow: "AI design + shopping list", heroTitle: "Redesign your room with real products to buy", heroSubtitle: "wayDecor.12Brain.org turns a photo into a visual proposal, preserves the room structure and builds an item-by-item budget with searchable Wayfair products.", featureDesign: "Visual transformation", featureBudget: "Buyable budget", featureStructure: "No structural edits", demoBefore: "original room", demoAfter: "projected vision", procurementNote: "the final proposal separates furniture, lighting, rugs and decor into a validated shopping list." },
+    upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera", heroEyebrow: "AI design + shopping list", heroTitle: "Redesign your room with real products to buy", heroSubtitle: "WayDecor turns a photo into a visual proposal, preserves the room structure and builds an item-by-item budget with searchable Wayfair products.", featureDesign: "Visual transformation", featureBudget: "Buyable budget", featureStructure: "No structural edits", demoBefore: "original room", demoAfter: "projected vision", procurementNote: "the final proposal separates furniture, lighting, rugs and decor into a validated shopping list." },
     roomSelect: { title: "Which room are we transforming?", residential: "Residential", commercial: "Commercial", next: "Next", customLabel: "Describe your room:", customPlaceholder: "Ex: small clinic, gourmet balcony, clothing store...", customRoom: "Describe room", autoRoom: "AI recognizes the room", autoRoomHint: "Luna identifies the room from the photo and decorates based on that recognition." },
     kidsConfig: { title: "Kids Room Config", age: "Age", theme: "Theme", themePlaceholder: "Ex: Dinosaurs...", gender: "Gender", select: "Select...", boy: "Boy", girl: "Girl", neutral: "Neutral" },
     styleSelect: { title: "Choose ideal style", cost: "Cost", generate: "Generate" },
@@ -316,7 +316,7 @@ const TRANSLATIONS = {
   es: {
     nav: { store: "Tienda", login: "Entrar", credits: "créditos" },
     steps: { upload: "Foto del ambiente", room: "Ambiente", style: "Estilo", project: "Proyecto y presupuesto" },
-    upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara", heroEyebrow: "Diseño con IA + lista de compra", heroTitle: "Rediseña tu ambiente con productos reales para comprar", heroSubtitle: "wayDecor.12Brain.org transforma una foto en una propuesta visual, preserva la estructura y crea un presupuesto por ítems con productos buscables en Wayfair.", featureDesign: "Imagen de impacto", featureBudget: "Presupuesto comprable", featureStructure: "Sin cambios estructurales", demoBefore: "ambiente original", demoAfter: "visión proyectada", procurementNote: "la propuesta final separa muebles, iluminación, alfombras y decoración en una lista de compra validable." },
+    upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara", heroEyebrow: "Diseño con IA + lista de compra", heroTitle: "Rediseña tu ambiente con productos reales para comprar", heroSubtitle: "WayDecor transforma una foto en una propuesta visual, preserva la estructura y crea un presupuesto por ítems con productos buscables en Wayfair.", featureDesign: "Imagen de impacto", featureBudget: "Presupuesto comprable", featureStructure: "Sin cambios estructurales", demoBefore: "ambiente original", demoAfter: "visión proyectada", procurementNote: "la propuesta final separa muebles, iluminación, alfombras y decoración en una lista de compra validable." },
     roomSelect: { title: "¿Qué ambiente transformamos?", residential: "Residencial", commercial: "Comercial", next: "Siguiente", customLabel: "Describe tu ambiente:", customPlaceholder: "Ej: clínica pequeña, balcón gourmet, tienda de ropa...", customRoom: "Describir ambiente", autoRoom: "IA reconoce el ambiente", autoRoomHint: "Luna identifica el ambiente por la foto y decora según ese reconocimiento." },
     kidsConfig: { title: "Config Habitación Infantil", age: "Edad", theme: "Tema", themePlaceholder: "Ej: Dinosaurios...", gender: "Género", select: "Seleccione...", boy: "Niño", girl: "Niña", neutral: "Neutro" },
     styleSelect: { title: "Elige estilo ideal", cost: "Costo", generate: "Generar" },
@@ -1017,7 +1017,7 @@ export default function App() {
         doc.setTextColor(217, 119, 6);
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
-        doc.text("wayDecor.12Brain.org", margin, 17);
+        doc.text("WayDecor", margin, 17);
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
@@ -1093,7 +1093,7 @@ export default function App() {
 	              cursorY += lineHeight;
 	          });
 	      }
-	      doc.save(`wayDecor_Briefing_${selectedRoomId}.pdf`);
+	      doc.save(`WayDecor_Briefing_${selectedRoomId}.pdf`);
 	  };
 
 	  const generateExtraViews = async () => {
@@ -1169,9 +1169,9 @@ export default function App() {
       <header className="bg-white/90 backdrop-blur border-b border-[#eadff2] sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="bg-[#7F187F] p-2 rounded border border-[#651365] shadow-sm"><Sparkles className="text-white w-5 h-5"/></div>
+            <img src="/icons/icon-192.png" alt="WayDecor logo" className="w-10 h-10 rounded-xl shadow-sm border border-[#eadff2]" />
             <div className="leading-tight">
-                <div>wayDecor.12Brain.org</div>
+                <div>WayDecor</div>
                 <div className="hidden sm:block text-[10px] uppercase tracking-wide text-[#85758a] font-bold">Visual design + shopping list</div>
             </div>
           </div>
@@ -1509,7 +1509,7 @@ export default function App() {
                                         <FileDown className="mr-2 w-5 h-5"/> {t.results.downloadPdf}
                                     </button>
                                     <button 
-                                        onClick={() => {const l = document.createElement('a'); l.href=generatedImage; l.download='wayDecor_Render.jpg'; l.click()}} 
+                                        onClick={() => {const l = document.createElement('a'); l.href=generatedImage; l.download='WayDecor_Render.jpg'; l.click()}} 
                                         className="bg-[#f3e8ff] text-[#4b3650] px-6 py-3 rounded-xl font-bold flex items-center hover:bg-[#eadff2] border border-[#dac7e5]"
                                     >
                                         <Download className="mr-2 w-5 h-5"/> {t.results.download}
