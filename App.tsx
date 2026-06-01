@@ -91,8 +91,7 @@ type WayfairBudgetItem = {
 
 const WAYFAIR_BASE_URL = 'https://www.wayfair.com';
 const WAYFAIR_SEARCH_URL = `${WAYFAIR_BASE_URL}/keyword.php`;
-const DECORE_DEMO_BEFORE = '/assets/demo-room-before.svg';
-const DECORE_DEMO_AFTER = '/assets/demo-room-after.svg';
+const DECORE_HERO_COMPARISON = '/assets/decore-hero-before-after.png';
 
 const buildWayfairSearchUrl = (term: string) =>
   `${WAYFAIR_SEARCH_URL}?keyword=${encodeURIComponent(term.trim() || 'home decor')}`;
@@ -1146,13 +1145,15 @@ export default function App() {
                             </div>
 
                             <div className="block bg-white border border-[#eadff2] rounded-2xl overflow-hidden shadow-xl p-2">
-                                <ComparisonSlider
-                                    before={DECORE_DEMO_BEFORE}
-                                    after={DECORE_DEMO_AFTER}
-                                    className="h-48 sm:h-64 md:h-80 border"
-                                    beforeLabel={t.upload.demoBefore}
-                                    afterLabel={t.upload.demoAfter}
-                                />
+                                <div className="relative overflow-hidden rounded-xl border border-[#eadff2] bg-[#f8f4fa]">
+                                    <img
+                                        src={DECORE_HERO_COMPARISON}
+                                        alt={`${t.upload.demoBefore} / ${t.upload.demoAfter}`}
+                                        className="w-full h-48 sm:h-64 md:h-80 object-cover"
+                                    />
+                                    <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs uppercase tracking-wide font-bold">{t.upload.demoBefore}</div>
+                                    <div className="absolute bottom-4 right-4 bg-[#7F187F]/90 text-white px-3 py-1 rounded-full text-xs uppercase tracking-wide font-bold">{t.upload.demoAfter}</div>
+                                </div>
                             </div>
                         </section>
 
