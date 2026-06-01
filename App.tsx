@@ -262,7 +262,7 @@ const TRANSLATIONS = {
     nav: { store: "Loja", login: "Entrar", credits: "créditos" },
     steps: { upload: "Foto do ambiente", room: "Cômodo", style: "Estilo", project: "Projeto e orçamento" },
     upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera", heroEyebrow: "Design com IA + lista de compra", heroTitle: "Decore seu ambiente com peças reais para comprar", heroSubtitle: "A Decore AI transforma uma foto em uma proposta visual, preserva a estrutura do espaço e monta um orçamento item por item com produtos pesquisáveis na Wayfair.", featureDesign: "Imagem de encantamento", featureBudget: "Orçamento comprável", featureStructure: "Sem mexer na estrutura", demoBefore: "ambiente original", demoAfter: "visão projetada", procurementNote: "a proposta final separa móveis, iluminação, tapetes e decoração em uma lista de compra validável." },
-    roomSelect: { title: "Qual ambiente vamos transformar?", residential: "Residencial", commercial: "Comercial & Corporativo", next: "Próximo", customLabel: "Descreva seu negócio:", customPlaceholder: "Ex: Barbearia Vintage..." },
+    roomSelect: { title: "Qual ambiente vamos transformar?", residential: "Residencial", commercial: "Comercial & Corporativo", next: "Próximo", customLabel: "Descreva seu ambiente:", customPlaceholder: "Ex: consultório pequeno, varanda gourmet, loja de roupas...", customRoom: "Descrever ambiente", autoRoom: "IA reconhece o ambiente", autoRoomHint: "A Luna identifica o cômodo pela foto e decora conforme o reconhecimento." },
     kidsConfig: { title: "Configuração do Quarto Infantil", age: "Idade", theme: "Tema", themePlaceholder: "Ex: Dinossauros...", gender: "Gênero", select: "Selecione...", boy: "Menino", girl: "Menina", neutral: "Neutro" },
     styleSelect: { title: "Escolha o estilo ideal", cost: "Custo", generate: "Gerar Transformação" },
     results: { 
@@ -284,7 +284,7 @@ const TRANSLATIONS = {
     nav: { store: "Store", login: "Login", credits: "credits" },
     steps: { upload: "Room photo", room: "Room", style: "Style", project: "Project and budget" },
     upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera", heroEyebrow: "AI design + shopping list", heroTitle: "Redesign your room with real products to buy", heroSubtitle: "Decore AI turns a photo into a visual proposal, preserves the room structure and builds an item-by-item budget with searchable Wayfair products.", featureDesign: "Visual transformation", featureBudget: "Buyable budget", featureStructure: "No structural edits", demoBefore: "original room", demoAfter: "projected vision", procurementNote: "the final proposal separates furniture, lighting, rugs and decor into a validated shopping list." },
-    roomSelect: { title: "Which room are we transforming?", residential: "Residential", commercial: "Commercial", next: "Next", customLabel: "Describe business:", customPlaceholder: "Ex: Vintage Barbershop..." },
+    roomSelect: { title: "Which room are we transforming?", residential: "Residential", commercial: "Commercial", next: "Next", customLabel: "Describe your room:", customPlaceholder: "Ex: small clinic, gourmet balcony, clothing store...", customRoom: "Describe room", autoRoom: "AI recognizes the room", autoRoomHint: "Luna identifies the room from the photo and decorates based on that recognition." },
     kidsConfig: { title: "Kids Room Config", age: "Age", theme: "Theme", themePlaceholder: "Ex: Dinosaurs...", gender: "Gender", select: "Select...", boy: "Boy", girl: "Girl", neutral: "Neutral" },
     styleSelect: { title: "Choose ideal style", cost: "Cost", generate: "Generate" },
     results: { 
@@ -306,7 +306,7 @@ const TRANSLATIONS = {
     nav: { store: "Tienda", login: "Entrar", credits: "créditos" },
     steps: { upload: "Foto del ambiente", room: "Ambiente", style: "Estilo", project: "Proyecto y presupuesto" },
     upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara", heroEyebrow: "Diseño con IA + lista de compra", heroTitle: "Rediseña tu ambiente con productos reales para comprar", heroSubtitle: "Decore AI transforma una foto en una propuesta visual, preserva la estructura y crea un presupuesto por ítems con productos buscables en Wayfair.", featureDesign: "Imagen de impacto", featureBudget: "Presupuesto comprable", featureStructure: "Sin cambios estructurales", demoBefore: "ambiente original", demoAfter: "visión proyectada", procurementNote: "la propuesta final separa muebles, iluminación, alfombras y decoración en una lista de compra validable." },
-    roomSelect: { title: "¿Qué ambiente transformamos?", residential: "Residencial", commercial: "Comercial", next: "Siguiente", customLabel: "Describe tu negocio:", customPlaceholder: "Ej: Barbería Vintage..." },
+    roomSelect: { title: "¿Qué ambiente transformamos?", residential: "Residencial", commercial: "Comercial", next: "Siguiente", customLabel: "Describe tu ambiente:", customPlaceholder: "Ej: clínica pequeña, balcón gourmet, tienda de ropa...", customRoom: "Describir ambiente", autoRoom: "IA reconoce el ambiente", autoRoomHint: "Luna identifica el ambiente por la foto y decora según ese reconocimiento." },
     kidsConfig: { title: "Config Habitación Infantil", age: "Edad", theme: "Tema", themePlaceholder: "Ej: Dinosaurios...", gender: "Género", select: "Seleccione...", boy: "Niño", girl: "Niña", neutral: "Neutro" },
     styleSelect: { title: "Elige estilo ideal", cost: "Costo", generate: "Generar" },
     results: { 
@@ -328,13 +328,13 @@ const TRANSLATIONS = {
 
 const ROOM_LABELS: Record<Language, Record<string, string>> = {
   pt: {
-    living_room: 'Sala de Estar', bedroom_master: 'Quarto Casal', bedroom_kids: 'Quarto Infantil', bedroom_single: 'Quarto Solteiro', bedroom_guest: 'Quarto Visitas', closet: 'Closet / Vestuário', kitchen: 'Cozinha', dining_room: 'Sala de Jantar', bathroom: 'Banheiro', office: 'Home Office', hall: 'Hall de Entrada', laundry: 'Lavanderia', balcony: 'Varanda / Terraço', cinema: 'Sala de Cinema', garage: 'Garagem', bbq: 'Churrasqueira', pool: 'Área Piscina', reception_medical: 'Recepção Consultório', lobby_corporate: 'Lobby Corporativo', meeting_room: 'Sala de Reunião', coworking: 'Espaço Coworking', coffee_shop: 'Cafeteria / Copa', lobby_residential: 'Lobby Residencial', party_hall: 'Salão de Festas', gym: 'Academia', kids_club: 'Brinquedoteca', custom_commercial: 'Outro / Loja'
+    living_room: 'Sala de Estar', bedroom_master: 'Quarto Casal', bedroom_kids: 'Quarto Infantil', bedroom_single: 'Quarto Solteiro', bedroom_guest: 'Quarto Visitas', closet: 'Closet / Vestuário', kitchen: 'Cozinha', dining_room: 'Sala de Jantar', bathroom: 'Banheiro', office: 'Home Office', hall: 'Hall de Entrada', laundry: 'Lavanderia', balcony: 'Varanda / Terraço', cinema: 'Sala de Cinema', garage: 'Garagem', bbq: 'Churrasqueira', pool: 'Área Piscina', reception_medical: 'Recepção Consultório', lobby_corporate: 'Lobby Corporativo', meeting_room: 'Sala de Reunião', coworking: 'Espaço Coworking', coffee_shop: 'Cafeteria / Copa', lobby_residential: 'Lobby Residencial', party_hall: 'Salão de Festas', gym: 'Academia', kids_club: 'Brinquedoteca', custom_commercial: 'Outro / Loja', custom_room: 'Ambiente descrito pelo usuário', ai_detect: 'Ambiente reconhecido pela IA'
   },
   en: {
-    living_room: 'Living Room', bedroom_master: 'Master Bedroom', bedroom_kids: 'Kids Bedroom', bedroom_single: 'Single Bedroom', bedroom_guest: 'Guest Bedroom', closet: 'Walk-in Closet', kitchen: 'Kitchen', dining_room: 'Dining Room', bathroom: 'Bathroom', office: 'Home Office', hall: 'Entrance Hall', laundry: 'Laundry Room', balcony: 'Balcony / Terrace', cinema: 'Home Theater', garage: 'Garage', bbq: 'BBQ Area', pool: 'Pool Area', reception_medical: 'Medical Reception', lobby_corporate: 'Corporate Lobby', meeting_room: 'Meeting Room', coworking: 'Coworking Space', coffee_shop: 'Coffee Shop', lobby_residential: 'Residential Lobby', party_hall: 'Party Hall', gym: 'Gym', kids_club: 'Kids Club', custom_commercial: 'Other / Retail'
+    living_room: 'Living Room', bedroom_master: 'Master Bedroom', bedroom_kids: 'Kids Bedroom', bedroom_single: 'Single Bedroom', bedroom_guest: 'Guest Bedroom', closet: 'Walk-in Closet', kitchen: 'Kitchen', dining_room: 'Dining Room', bathroom: 'Bathroom', office: 'Home Office', hall: 'Entrance Hall', laundry: 'Laundry Room', balcony: 'Balcony / Terrace', cinema: 'Home Theater', garage: 'Garage', bbq: 'BBQ Area', pool: 'Pool Area', reception_medical: 'Medical Reception', lobby_corporate: 'Corporate Lobby', meeting_room: 'Meeting Room', coworking: 'Coworking Space', coffee_shop: 'Coffee Shop', lobby_residential: 'Residential Lobby', party_hall: 'Party Hall', gym: 'Gym', kids_club: 'Kids Club', custom_commercial: 'Other / Retail', custom_room: 'User-described room', ai_detect: 'AI-recognized room'
   },
   es: {
-    living_room: 'Sala de Estar', bedroom_master: 'Dormitorio Principal', bedroom_kids: 'Dormitorio Niños', bedroom_single: 'Dormitorio Individual', bedroom_guest: 'Dormitorio Visitas', closet: 'Vestidor', kitchen: 'Cocina', dining_room: 'Comedor', bathroom: 'Baño', office: 'Oficina en Casa', hall: 'Recibidor', laundry: 'Lavandería', balcony: 'Balcón / Terraza', cinema: 'Cine en Casa', garage: 'Garaje', bbq: 'Zona de Barbacoa', pool: 'Zona de Piscina', reception_medical: 'Recepción Médica', lobby_corporate: 'Vestíbulo Corporativo', meeting_room: 'Sala de Reuniones', coworking: 'Espacio Coworking', coffee_shop: 'Cafetería', lobby_residential: 'Vestíbulo Residencial', party_hall: 'Salón de Fiestas', gym: 'Gimnasio', kids_club: 'Club Infantil', custom_commercial: 'Otro / Tienda'
+    living_room: 'Sala de Estar', bedroom_master: 'Dormitorio Principal', bedroom_kids: 'Dormitorio Niños', bedroom_single: 'Dormitorio Individual', bedroom_guest: 'Dormitorio Visitas', closet: 'Vestidor', kitchen: 'Cocina', dining_room: 'Comedor', bathroom: 'Baño', office: 'Oficina en Casa', hall: 'Recibidor', laundry: 'Lavandería', balcony: 'Balcón / Terraza', cinema: 'Cine en Casa', garage: 'Garaje', bbq: 'Zona de Barbacoa', pool: 'Zona de Piscina', reception_medical: 'Recepción Médica', lobby_corporate: 'Vestíbulo Corporativo', meeting_room: 'Sala de Reuniones', coworking: 'Espacio Coworking', coffee_shop: 'Cafetería', lobby_residential: 'Vestíbulo Residencial', party_hall: 'Salón de Fiestas', gym: 'Gimnasio', kids_club: 'Club Infantil', custom_commercial: 'Otro / Tienda', custom_room: 'Ambiente descrito por el usuario', ai_detect: 'Ambiente reconocido por IA'
   }
 };
 
@@ -511,8 +511,6 @@ const ROOM_TYPES = [
   { id: 'gym', icon: Dumbbell, category: 'commercial' },
   { id: 'kids_club', icon: Gamepad2, category: 'commercial' },
 
-  // Personalizado
-  { id: 'custom_commercial', icon: Store, category: 'commercial' }
 ];
 
 const GENERATION_COST = 10;
@@ -697,6 +695,24 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  const getSelectedRoomLabel = (language: Language = lang) => {
+    if (selectedRoomId === 'custom_room') return customRoomType.trim() || ROOM_LABELS[language].custom_room;
+    if (selectedRoomId === 'ai_detect') return ROOM_LABELS[language].ai_detect;
+    return selectedRoomId ? (ROOM_LABELS[language][selectedRoomId] || selectedRoomId) : '';
+  };
+
+  const getRoomPromptInstruction = () => {
+    if (selectedRoomId === 'ai_detect') {
+      return 'AI-DETECTED ROOM: First identify the room type from the input image, then design appropriately for that recognized room. State the recognition internally through the design choices, but preserve the original architecture.';
+    }
+    if (selectedRoomId === 'custom_room') {
+      return `USER-DESCRIBED ROOM: ${customRoomType.trim()}. Treat this description as the room type and business/use context.`;
+    }
+    return `ROOM TYPE: ${getSelectedRoomLabel('en')}`;
+  };
+
+  const canProceedFromRoom = Boolean(selectedRoomId && (selectedRoomId !== 'custom_room' || customRoomType.trim().length >= 3));
+
   useEffect(() => {
     const savedLang = localStorage.getItem('bhome_lang');
     if (savedLang) setLang(savedLang as Language);
@@ -827,6 +843,10 @@ export default function App() {
         alert("Informe idade e tema para quarto infantil."); return;
     }
 
+    if (selectedRoomId === 'custom_room' && customRoomType.trim().length < 3) {
+        alert("Descreva o ambiente para continuar."); return;
+    }
+
     if (!(await deductCredits(GENERATION_COST))) return;
 
 	    if (!overrideMaterial) {
@@ -840,9 +860,10 @@ export default function App() {
     setIsGenerating(true);
     
     try {
-      const room = ROOM_TYPES.find(r => r.id === selectedRoomId);
       const style = decorStyles.find(s => s.id === effectiveStyleId);
       const requestId = new Date().getTime();
+      const roomLabel = getSelectedRoomLabel('en');
+      const roomInstruction = getRoomPromptInstruction();
 
       setLoadingMessage(t.loading.design);
       
@@ -852,7 +873,7 @@ export default function App() {
         
         Act as a Senior Interior Architect.
         Target Style: ${STYLE_LABELS['en'][effectiveStyleId]} (${style?.prompt_modifier || 'High-end design'})
-        Room Type: ${selectedRoomId === 'custom_commercial' ? customRoomType : ROOM_LABELS['en'][selectedRoomId]}
+        ${roomInstruction}
         ${selectedRoomId === 'bedroom_kids' ? `Kids Config: Age ${childAge}, Theme ${childTheme}, Gender ${childGender}.` : ''}
         ${overrideMaterial ? `MANDATORY MATERIAL OVERRIDE: All furniture and joinery MUST USE: ${overrideMaterial}.` : ''}
         
@@ -925,7 +946,7 @@ export default function App() {
 	          setLoadingMessage("Curando lista de compras Wayfair...");
 	          setWayfairBudget([]);
 	          const wayfairResult = await generateWayfairBudget({
-	              roomLabel: selectedRoomId === 'custom_commercial' ? customRoomType : ROOM_LABELS['en'][selectedRoomId],
+	              roomLabel,
 	              styleLabel: STYLE_LABELS['en'][effectiveStyleId],
 	              designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
 	              language: lang,
@@ -951,12 +972,13 @@ export default function App() {
      if (!(await deductCredits(TECH_REPORT_COST))) return;
      
      setIsGenerating(true);
-     setLoadingMessage(t.loading.tech);
-     
-     try {
-         const prompt = `
+	     setLoadingMessage(t.loading.tech);
+	     
+	     try {
+         const roomLabel = getSelectedRoomLabel('en');
+	         const prompt = `
             ACT AS A SENIOR INTERIOR ARCHITECT.
-	            PROJECT: ${ROOM_LABELS['en'][selectedRoomId]} in ${STYLE_LABELS['en'][selectedStyleId]} style.
+	            PROJECT: ${roomLabel} in ${STYLE_LABELS['en'][selectedStyleId]} style.
 	            TASK: Create a Professional Project Briefing for the Carpenter/Contractor.
 	            LANGUAGE: ${lang === 'pt' ? 'Portuguese' : lang === 'es' ? 'Spanish' : 'English'}.
 	            WAYFAIR PROCUREMENT LIST:
@@ -998,7 +1020,7 @@ export default function App() {
       doc.setFont("helvetica", "bold");
       doc.text(`Projeto:`, margin, cursorY);
       doc.setFont("helvetica", "normal");
-      doc.text(`${ROOM_LABELS[lang][selectedRoomId!] || selectedRoomId}`, margin + 20, cursorY);
+      doc.text(`${getSelectedRoomLabel(lang)}`, margin + 20, cursorY);
       cursorY += 6;
       doc.setFont("helvetica", "bold");
       doc.text(`Estilo:`, margin, cursorY);
@@ -1099,7 +1121,7 @@ export default function App() {
 	              headers: { 'Content-Type': 'application/json' },
 	              body: JSON.stringify({
 	                  providerId: selectedProviderId,
-	                  room: ROOM_LABELS[lang][selectedRoomId] || selectedRoomId,
+	                  room: getSelectedRoomLabel(lang),
 	                  style: STYLE_LABELS[lang][selectedStyleId] || selectedStyleId,
 	                  budgetItems: wayfairBudget,
 	                  budgetNote: wayfairBudgetNote,
@@ -1260,6 +1282,45 @@ export default function App() {
                                 </div>
                             </div>
                         ))}
+                        <div className="bg-white border border-[#eadff2] rounded-2xl p-5 shadow-sm">
+                            <h3 className="text-sm font-bold text-[#85758a] uppercase mb-4 flex items-center">
+                                <HelpCircle className="w-4 h-4 mr-2" />
+                                Opções flexíveis
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button
+                                    onClick={() => setSelectedRoomId('custom_room')}
+                                    className={`flex items-start gap-4 p-4 rounded-xl text-left transition-all ${selectedRoomId==='custom_room' ? 'bg-[#f3e8ff] text-[#7F187F] ring-2 ring-[#7F187F]' : 'bg-[#fbf8fd] border border-[#eadff2] hover:border-[#7F187F]/50'}`}
+                                >
+                                    <HelpCircle size={30} className="shrink-0 mt-1" />
+                                    <div>
+                                        <div className="font-black">{t.roomSelect.customRoom}</div>
+                                        <div className="text-xs text-[#85758a] mt-1">{t.roomSelect.customLabel}</div>
+                                    </div>
+                                </button>
+                                <button
+                                    onClick={() => setSelectedRoomId('ai_detect')}
+                                    className={`flex items-start gap-4 p-4 rounded-xl text-left transition-all ${selectedRoomId==='ai_detect' ? 'bg-[#f3e8ff] text-[#7F187F] ring-2 ring-[#7F187F]' : 'bg-[#fbf8fd] border border-[#eadff2] hover:border-[#7F187F]/50'}`}
+                                >
+                                    <Sparkles size={30} className="shrink-0 mt-1" />
+                                    <div>
+                                        <div className="font-black">{t.roomSelect.autoRoom}</div>
+                                        <div className="text-xs text-[#85758a] mt-1">{t.roomSelect.autoRoomHint}</div>
+                                    </div>
+                                </button>
+                            </div>
+                            {selectedRoomId === 'custom_room' && (
+                                <div className="mt-4">
+                                    <label className="block text-xs font-black uppercase text-[#85758a] mb-2">{t.roomSelect.customLabel}</label>
+                                    <input
+                                        value={customRoomType}
+                                        onChange={e => setCustomRoomType(e.target.value)}
+                                        placeholder={t.roomSelect.customPlaceholder}
+                                        className="w-full bg-[#f7f3fb] border border-[#dac7e5] p-3 rounded-xl text-[#2f1a35] outline-none focus:ring-2 focus:ring-[#7F187F]"
+                                    />
+                                </div>
+                            )}
+                        </div>
                         {selectedRoomId === 'bedroom_kids' && (
                              <div className="bg-white border border-[#eadff2] p-4 rounded-xl grid grid-cols-3 gap-4">
                                  <input placeholder={t.kidsConfig.age} value={childAge} onChange={e=>setChildAge(e.target.value)} className="bg-[#f7f3fb] border border-[#dac7e5] p-2 rounded text-[#2f1a35]"/>
@@ -1271,7 +1332,7 @@ export default function App() {
                                  </select>
                              </div>
                         )}
-                        <div className="flex justify-end"><button onClick={() => setCurrentStep(3)} className="bg-[#7F187F] px-8 py-3 rounded-xl font-bold text-white hover:bg-[#651365]">{t.roomSelect.next}</button></div>
+                        <div className="flex justify-end"><button onClick={() => canProceedFromRoom && setCurrentStep(3)} disabled={!canProceedFromRoom} className="bg-[#7F187F] px-8 py-3 rounded-xl font-bold text-white hover:bg-[#651365] disabled:opacity-45 disabled:cursor-not-allowed">{t.roomSelect.next}</button></div>
                     </div>
                 )}
 
