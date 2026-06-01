@@ -89,6 +89,61 @@ type WayfairBudgetItem = {
   note?: string;
 };
 
+type BudgetTierId = 'essential' | 'balanced' | 'premium';
+
+type BudgetTier = {
+  id: BudgetTierId;
+  min: number;
+  max: number | null;
+  labels: Record<Language, string>;
+  subtitles: Record<Language, string>;
+  prompt: string;
+};
+
+const BUDGET_TIERS: BudgetTier[] = [
+  {
+    id: 'essential',
+    min: 0,
+    max: 2000,
+    labels: { pt: 'Até $2.000', en: 'Up to $2,000', es: 'Hasta $2,000' },
+    subtitles: {
+      pt: 'Prioriza impacto visual com peças essenciais e bons achados.',
+      en: 'Prioritizes visual impact with essential pieces and good finds.',
+      es: 'Prioriza impacto visual con piezas esenciales y buenos hallazgos.',
+    },
+    prompt: 'Essential budget. Keep the complete shopping list total at or below USD 2,000. Favor affordable Wayfair pieces, accents, lighting, rugs and compact furniture with high visual impact.',
+  },
+  {
+    id: 'balanced',
+    min: 2000,
+    max: 5000,
+    labels: { pt: '$2.000 a $5.000', en: '$2,000 to $5,000', es: '$2,000 a $5,000' },
+    subtitles: {
+      pt: 'Equilibra móveis principais, iluminação e decoração de melhor acabamento.',
+      en: 'Balances key furniture, lighting and better-finished decor.',
+      es: 'Equilibra muebles principales, iluminación y decoración de mejor acabado.',
+    },
+    prompt: 'Balanced budget. Target a complete shopping list between USD 2,000 and USD 5,000. Mix good-value core furniture with better lighting, rug, decor and storage choices.',
+  },
+  {
+    id: 'premium',
+    min: 5000,
+    max: null,
+    labels: { pt: 'Acima de $5.000', en: 'Above $5,000', es: 'Más de $5,000' },
+    subtitles: {
+      pt: 'Usa peças premium e uma composição mais sofisticada, sem limite rígido.',
+      en: 'Uses premium pieces and a more sophisticated composition, without a hard cap.',
+      es: 'Usa piezas premium y una composición más sofisticada, sin límite rígido.',
+    },
+    prompt: 'Premium budget. Use higher-end Wayfair pieces and a more complete composition. The total may exceed USD 5,000, but avoid waste and keep choices commercially realistic.',
+  },
+];
+
+const getBudgetTier = (id: BudgetTierId) =>
+  BUDGET_TIERS.find(tier => tier.id === id) || BUDGET_TIERS[0];
+
+const getBudgetRangeLabel = (tier: BudgetTier, language: Language = 'pt') => tier.labels[language];
+
 const WAYFAIR_BASE_URL = 'https://www.wayfair.com';
 const WAYFAIR_SEARCH_URL = `${WAYFAIR_BASE_URL}/keyword.php`;
 const DECORE_HERO_COMPARISON = '/assets/decore-hero-before-after.png';
@@ -215,6 +270,7 @@ const generateWayfairBudget = async (
     styleLabel: string;
     designDescription: string;
     language: Language;
+    budgetTier: BudgetTier;
   }
 ): Promise<{ items: WayfairBudgetItem[]; note: string }> => {
   const prompt = `
@@ -225,6 +281,9 @@ Create a Wayfair-only shopping list for this generated interior design.
 
 ROOM: ${params.roomLabel}
 STYLE: ${params.styleLabel}
+BUDGET: ${getBudgetRangeLabel(params.budgetTier, 'en')}
+BUDGET INSTRUCTION:
+${params.budgetTier.prompt}
 DESIGN DESCRIPTION:
 ${params.designDescription}
 
@@ -235,6 +294,8 @@ STRICT PROCUREMENT RULES:
 4. If a direct product page is not confidently found, use a Wayfair search URL for the exact item name.
 5. Return 6 to 10 items that could realistically compose this room: furniture, rug, lighting, wall decor, accents, storage and textiles.
 6. Prices must be realistic planning prices in USD. If exact current price is uncertain, use a conservative estimate and explain that in note.
+7. Respect the selected budget tier. The sum of quantity * unitPrice must fit the budget rule whenever the tier has a cap.
+8. If the selected room cannot be credibly completed inside the budget cap, choose the most important impact items first and explain the tradeoff in the note.
 
 Return ONLY valid JSON:
 {
@@ -693,6 +754,7 @@ export default function App() {
   const [wayfairBudget, setWayfairBudget] = useState<WayfairBudgetItem[]>([]);
   const [wayfairBudgetNote, setWayfairBudgetNote] = useState('');
   const [selectedProviderId, setSelectedProviderId] = useState('wayfair');
+  const [selectedBudgetTierId, setSelectedBudgetTierId] = useState<BudgetTierId>('essential');
   const [savedProjects, setSavedProjects] = useState<any[]>([]);
   const [savingProject, setSavingProject] = useState(false);
   const [projectSaveMessage, setProjectSaveMessage] = useState('');
@@ -723,6 +785,7 @@ export default function App() {
   };
 
   const canProceedFromRoom = Boolean(selectedRoomId && (selectedRoomId !== 'custom_room' || customRoomType.trim().length >= 3));
+  const selectedBudgetTier = getBudgetTier(selectedBudgetTierId);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('bhome_lang');
@@ -875,6 +938,7 @@ export default function App() {
       const requestId = new Date().getTime();
       const roomLabel = getSelectedRoomLabel('en');
       const roomInstruction = getRoomPromptInstruction();
+      const budgetInstruction = selectedBudgetTier.prompt;
 
       setLoadingMessage(t.loading.design);
       
@@ -885,6 +949,8 @@ export default function App() {
         Act as a Senior Interior Architect.
         Target Style: ${STYLE_LABELS['en'][effectiveStyleId]} (${style?.prompt_modifier || 'High-end design'})
         ${roomInstruction}
+        BUDGET TIER: ${getBudgetRangeLabel(selectedBudgetTier, 'en')}
+        BUDGET DISCIPLINE: ${budgetInstruction}
         ${selectedRoomId === 'bedroom_kids' ? `Kids Config: Age ${childAge}, Theme ${childTheme}, Gender ${childGender}.` : ''}
         ${overrideMaterial ? `MANDATORY MATERIAL OVERRIDE: All furniture and joinery MUST USE: ${overrideMaterial}.` : ''}
         
@@ -895,6 +961,7 @@ export default function App() {
 	        4. REDESIGN INTERIOR: Apply a new, sophisticated composition without changing the architecture of the room.
 	        5. WAYFAIR PROCUREMENT LOCK: The design must be executable with furniture, lighting, rugs, wall decor, storage, textiles and decorative items that can be sourced on Wayfair.com.
 	        6. Do not depend on custom-only or unbuyable pieces unless they are non-structural finishes already present in the room.
+	        7. Respect the selected budget tier. Match the visual ambition to the budget and avoid designing around items that would clearly exceed the selected range.
 	        
 	        Output only the raw prompt text.
 	      `;
@@ -961,6 +1028,7 @@ export default function App() {
 	              styleLabel: STYLE_LABELS['en'][effectiveStyleId],
 	              designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
 	              language: lang,
+	              budgetTier: selectedBudgetTier,
 	          });
 	          setWayfairBudget(wayfairResult.items);
 	          setWayfairBudgetNote(wayfairResult.note);
@@ -989,12 +1057,13 @@ export default function App() {
          const roomLabel = getSelectedRoomLabel('en');
 	         const prompt = `
             ACT AS A SENIOR INTERIOR ARCHITECT.
-	            PROJECT: ${roomLabel} in ${STYLE_LABELS['en'][selectedStyleId]} style.
-	            TASK: Create a Professional Project Briefing for the Carpenter/Contractor.
-	            LANGUAGE: ${lang === 'pt' ? 'Portuguese' : lang === 'es' ? 'Spanish' : 'English'}.
-	            WAYFAIR PROCUREMENT LIST:
-	            ${wayfairBudget.map(item => `- ${item.quantity}x ${item.name} (${item.category}) - ${toMoney(item.totalPrice)} - ${item.url}`).join('\n')}
-	            Include a short note that movable furniture/decor items were selected from Wayfair links/searches and must be checked for final availability before purchase.
+		            PROJECT: ${roomLabel} in ${STYLE_LABELS['en'][selectedStyleId]} style.
+		            TASK: Create a Professional Project Briefing for the Carpenter/Contractor.
+		            LANGUAGE: ${lang === 'pt' ? 'Portuguese' : lang === 'es' ? 'Spanish' : 'English'}.
+		            SELECTED CLIENT BUDGET: ${getBudgetRangeLabel(selectedBudgetTier, lang)}.
+		            WAYFAIR PROCUREMENT LIST:
+		            ${wayfairBudget.map(item => `- ${item.quantity}x ${item.name} (${item.category}) - ${toMoney(item.totalPrice)} - ${item.url}`).join('\n')}
+		            Include a short note that movable furniture/decor items were selected from Wayfair links/searches and must be checked for final availability before purchase.
 	            FORMAT: Plain text with headers.
 	         `;
          const res = await generateGeminiContent({ model: 'gemini-2.5-flash', contents: prompt });
@@ -1073,13 +1142,14 @@ export default function App() {
 	          doc.text("Orçamento Wayfair", margin, cursorY);
 	          cursorY += 8;
 	          doc.setFont("helvetica", "normal");
-	          doc.setFontSize(9);
-	          doc.setTextColor(40, 40, 40);
-	          const budgetLines = doc.splitTextToSize(
-	              `${wayfairBudgetNote || 'Itens selecionados em Wayfair para validação final de disponibilidade e preço.'}\n\n` +
-	              wayfairBudget.map((item, index) =>
-	                  `${index + 1}. ${item.quantity}x ${item.name} | ${item.category} | ${toMoney(item.totalPrice)} | ${item.url}`
-	              ).join('\n'),
+		          doc.setFontSize(9);
+		          doc.setTextColor(40, 40, 40);
+		          const budgetLines = doc.splitTextToSize(
+		              `Budget selecionado: ${getBudgetRangeLabel(selectedBudgetTier, lang)}\n` +
+		              `${wayfairBudgetNote || 'Itens selecionados em Wayfair para validação final de disponibilidade e preço.'}\n\n` +
+		              wayfairBudget.map((item, index) =>
+		                  `${index + 1}. ${item.quantity}x ${item.name} | ${item.category} | ${toMoney(item.totalPrice)} | ${item.url}`
+		              ).join('\n'),
 	              pageWidth - (margin * 2)
 	          );
 	          budgetLines.forEach((line: string) => {
@@ -1131,12 +1201,14 @@ export default function App() {
 	              method: 'POST',
 	              headers: { 'Content-Type': 'application/json' },
 	              body: JSON.stringify({
-	                  providerId: selectedProviderId,
-	                  room: getSelectedRoomLabel(lang),
-	                  style: STYLE_LABELS[lang][selectedStyleId] || selectedStyleId,
-	                  budgetItems: wayfairBudget,
-	                  budgetNote: wayfairBudgetNote,
-	                  report: transformationReport,
+		                  providerId: selectedProviderId,
+		                  room: getSelectedRoomLabel(lang),
+		                  style: STYLE_LABELS[lang][selectedStyleId] || selectedStyleId,
+		                  budgetTier: selectedBudgetTierId,
+		                  budgetRange: getBudgetRangeLabel(selectedBudgetTier, lang),
+		                  budgetItems: wayfairBudget,
+		                  budgetNote: wayfairBudgetNote,
+		                  report: transformationReport,
 	                  previewImage: generatedImage,
 	              }),
 	          });
@@ -1152,6 +1224,16 @@ export default function App() {
 	  };
 
 	  const wayfairTotal = wayfairBudget.reduce((sum, item) => sum + item.totalPrice, 0);
+	  const budgetStatus = selectedBudgetTier.max && wayfairTotal > selectedBudgetTier.max
+	      ? 'over'
+	      : selectedBudgetTier.min > 0 && wayfairTotal > 0 && wayfairTotal < selectedBudgetTier.min
+	          ? 'under'
+	          : 'within';
+	  const budgetStatusLabel = budgetStatus === 'over'
+	      ? (lang === 'en' ? 'over budget' : lang === 'es' ? 'sobre el budget' : 'acima do budget')
+	      : budgetStatus === 'under'
+	          ? (lang === 'en' ? 'below range' : lang === 'es' ? 'debajo de la faixa' : 'abaixo da faixa')
+	          : (lang === 'en' ? 'within budget' : lang === 'es' ? 'dentro del budget' : 'dentro do budget');
 
 	  return (
     <div className="min-h-screen bg-[#f7f3fb] font-sans text-[#2f1a35] pb-20 relative">
@@ -1375,6 +1457,31 @@ export default function App() {
 	                                ))}
 	                            </div>
 	                        </div>
+	                        <div className="bg-white border border-[#eadff2] rounded-2xl p-5">
+	                            <div className="flex items-center gap-2 mb-4">
+	                                <Coins className="w-5 h-5 text-[#7F187F]" />
+	                                <div>
+	                                    <h3 className="font-black text-[#2f1a35]">Budget do projeto</h3>
+	                                    <p className="text-xs text-[#85758a]">A decoração e a lista Wayfair serão calculadas conforme a faixa escolhida.</p>
+	                                </div>
+	                            </div>
+	                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+	                                {BUDGET_TIERS.map(tier => (
+	                                    <button
+	                                        key={tier.id}
+	                                        type="button"
+	                                        onClick={() => setSelectedBudgetTierId(tier.id)}
+	                                        className={`text-left rounded-xl border p-4 transition-all ${selectedBudgetTierId === tier.id ? 'bg-[#7F187F]/10 border-[#7F187F] text-[#7F187F] ring-2 ring-[#7F187F]/20' : 'bg-[#f7f3fb] border-[#eadff2] text-[#4b3650] hover:border-[#7F187F]/50'}`}
+	                                    >
+	                                        <div className="flex items-center justify-between gap-3">
+	                                            <div className="font-black text-lg">{tier.labels[lang]}</div>
+	                                            {selectedBudgetTierId === tier.id && <CheckCircle2 className="w-5 h-5 shrink-0" />}
+	                                        </div>
+	                                        <p className="text-xs text-[#6f6075] mt-2 leading-relaxed">{tier.subtitles[lang]}</p>
+	                                    </button>
+	                                ))}
+	                            </div>
+	                        </div>
 	                        {loadingStyles ? (
                             <div className="flex justify-center py-20"><Spinner message={t.loading.seeding || "Loading..."} /></div>
                         ) : (
@@ -1417,6 +1524,17 @@ export default function App() {
 	                                    <p className="text-[#6f6075] text-sm mt-1">
 	                                        Itens móveis e decoração limitados à Wayfair, com link direto ou busca validável na loja.
 	                                    </p>
+	                                    <div className="mt-3 flex flex-wrap gap-2">
+	                                        <span className="inline-flex items-center gap-1 rounded-full bg-[#f3e8ff] px-3 py-1 text-xs font-black text-[#7F187F]">
+	                                            <Coins className="w-3 h-3" />
+	                                            Budget: {getBudgetRangeLabel(selectedBudgetTier, lang)}
+	                                        </span>
+	                                        {wayfairBudget.length > 0 && (
+	                                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-black ${budgetStatus === 'over' ? 'bg-red-50 text-red-700' : budgetStatus === 'under' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'}`}>
+	                                                {budgetStatusLabel}
+	                                            </span>
+	                                        )}
+	                                    </div>
 	                                </div>
 	                                <div className="flex flex-col md:flex-row gap-3 md:items-center">
 	                                    <button
@@ -1569,6 +1687,7 @@ export default function App() {
 	                                            <p className="text-xs text-[#85758a]">{new Date(project.createdAt).toLocaleDateString()}</p>
 	                                            <h4 className="font-black text-[#2f1a35] mt-1">{project.room || 'Ambiente'}</h4>
 	                                            <p className="text-xs text-[#6f6075]">{project.style || 'Estilo'} • {project.providerName}</p>
+	                                            {project.budgetRange && <p className="text-[11px] text-[#85758a] mt-1">Budget: {project.budgetRange}</p>}
 	                                            <p className="text-[#7F187F] font-black mt-2">{toMoney(Number(project.total || 0))}</p>
 	                                        </div>
 	                                    ))}

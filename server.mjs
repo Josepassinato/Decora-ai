@@ -319,6 +319,8 @@ const normalizeProject = (payload) => {
     style: String(payload.style || ''),
     status: payload.status || 'proposal',
     total: normalizedItems.reduce((sum, item) => sum + item.totalPrice, 0),
+    budgetTier: String(payload.budgetTier || ''),
+    budgetRange: String(payload.budgetRange || ''),
     budgetItems: normalizedItems,
     budgetNote: String(payload.budgetNote || ''),
     report: String(payload.report || ''),
