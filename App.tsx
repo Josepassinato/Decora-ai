@@ -116,7 +116,7 @@ const BUDGET_TIERS: BudgetTier[] = [
       en: 'Prioritizes visual impact with essential pieces and good finds.',
       es: 'Prioriza impacto visual con piezas esenciales y buenos hallazgos.',
     },
-    prompt: 'Essential budget. Keep the complete shopping list total at or below USD 2,000. Favor affordable Wayfair pieces, accents, lighting, rugs and compact furniture with high visual impact.',
+    prompt: 'Essential budget. Keep the complete shopping list total at or below USD 2,000. Favor affordable pieces, accents, lighting, rugs and compact furniture with high visual impact.',
   },
   {
     id: 'balanced',
@@ -140,7 +140,7 @@ const BUDGET_TIERS: BudgetTier[] = [
       en: 'Uses premium pieces and a more sophisticated composition, without a hard cap.',
       es: 'Usa piezas premium y una composición más sofisticada, sin límite rígido.',
     },
-    prompt: 'Premium budget. Use higher-end Wayfair pieces and a more complete composition. The total may exceed USD 5,000, but avoid waste and keep choices commercially realistic.',
+    prompt: 'Premium budget. Use higher-end pieces and a more complete composition. The total may exceed USD 5,000, but avoid waste and keep choices commercially realistic.',
   },
 ];
 
@@ -150,26 +150,53 @@ const getBudgetTier = (id: BudgetTierId) =>
 const getBudgetRangeLabel = (tier: BudgetTier, language: Language = 'pt') => tier.labels[language];
 
 const WAYFAIR_BASE_URL = 'https://www.wayfair.com';
-const WAYFAIR_SEARCH_URL = `${WAYFAIR_BASE_URL}/keyword.php`;
+const WAYFAIR_SEARCH_URL = `${WAYFAIR_BASE_URL}/keyword.php?keyword=`;
+const TARGET_BASE_URL = 'https://www.target.com';
+const TARGET_SEARCH_URL = `${TARGET_BASE_URL}/s?searchTerm=`;
 const DECORE_HERO_COMPARISON = '/assets/decore-hero-before-after.png';
 
-const buildWayfairSearchUrl = (term: string) =>
-  `${WAYFAIR_SEARCH_URL}?keyword=${encodeURIComponent(term.trim() || 'home decor')}`;
+const PRODUCT_PROVIDERS = [
+  { id: 'wayfair', name: 'Wayfair', status: 'active', baseUrl: WAYFAIR_BASE_URL, searchUrl: WAYFAIR_SEARCH_URL, note: 'Fornecedor principal para decoracao compravel.' },
+  { id: 'target', name: 'Target', status: 'active', baseUrl: TARGET_BASE_URL, searchUrl: TARGET_SEARCH_URL, note: 'Objetos, iluminacao simples e decoracao acessivel.' },
+  { id: 'home-depot', name: 'Home Depot', status: 'planned', baseUrl: 'https://www.homedepot.com', searchUrl: 'https://www.homedepot.com/s/', note: 'Materiais e acabamentos de obra.' },
+  { id: 'ikea', name: 'IKEA', status: 'planned', baseUrl: 'https://www.ikea.com', searchUrl: 'https://www.ikea.com/us/en/search/?q=', note: 'Moveis modulares e economicos.' },
+  { id: 'west-elm', name: 'West Elm', status: 'planned', baseUrl: 'https://www.westelm.com', searchUrl: 'https://www.westelm.com/search/results.html?words=', note: 'Decoracao premium.' },
+  { id: 'manual-catalog', name: 'Catalogo manual', status: 'planned', baseUrl: '', searchUrl: '', note: 'Lojas sem catalogo publico, como HomeSense.' },
+];
 
-const isWayfairUrl = (url: string) => {
+type ProductProviderConfig = typeof PRODUCT_PROVIDERS[number];
+
+const getProductProvider = (id: string): ProductProviderConfig =>
+  PRODUCT_PROVIDERS.find(provider => provider.id === id) || PRODUCT_PROVIDERS[0];
+
+const buildProductSearchUrl = (provider: ProductProviderConfig, term: string) =>
+  provider.searchUrl ? `${provider.searchUrl}${encodeURIComponent(term.trim() || 'home decor')}` : '';
+
+const isProductProviderUrl = (url: string, provider: ProductProviderConfig) => {
   try {
     const parsed = new URL(url);
-    return parsed.hostname === 'wayfair.com' || parsed.hostname.endsWith('.wayfair.com');
+    const host = parsed.hostname.replace(/^www\./, '');
+    if (provider.id === 'wayfair') return host === 'wayfair.com' || host.endsWith('.wayfair.com');
+    if (provider.id === 'target') return host === 'target.com' || host.endsWith('.target.com');
+    if (provider.id === 'home-depot') return host === 'homedepot.com' || host.endsWith('.homedepot.com');
+    if (provider.id === 'ikea') return host === 'ikea.com' || host.endsWith('.ikea.com');
+    if (provider.id === 'west-elm') return host === 'westelm.com' || host.endsWith('.westelm.com');
+    return false;
   } catch {
     return false;
   }
 };
 
-const isWayfairDirectProductUrl = (url: string) => {
+const isDirectProductUrl = (url: string, provider: ProductProviderConfig) => {
   try {
     const parsed = new URL(url);
-    const isWayfair = parsed.hostname === 'wayfair.com' || parsed.hostname.endsWith('.wayfair.com');
-    return isWayfair && !parsed.pathname.includes('keyword.php');
+    if (!isProductProviderUrl(url, provider)) return false;
+    if (provider.id === 'wayfair') return !parsed.pathname.includes('keyword.php');
+    if (provider.id === 'target') return parsed.pathname.includes('/p/');
+    if (provider.id === 'home-depot') return !parsed.pathname.startsWith('/s/');
+    if (provider.id === 'ikea') return !parsed.pathname.includes('/search/');
+    if (provider.id === 'west-elm') return !parsed.pathname.includes('/search/');
+    return true;
   } catch {
     return false;
   }
@@ -178,14 +205,14 @@ const isWayfairDirectProductUrl = (url: string) => {
 const toMoney = (value: number) =>
   value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
-const normalizeWayfairItem = (raw: any): WayfairBudgetItem | null => {
+const normalizeShoppingItem = (raw: any, provider: ProductProviderConfig): WayfairBudgetItem | null => {
   if (!raw || typeof raw !== 'object') return null;
   const name = String(raw.name || '').trim();
   const category = String(raw.category || 'Decor').trim();
   const quantity = Math.max(1, Number(raw.quantity || 1));
   const unitPrice = Math.max(0, Number(raw.unitPrice || raw.price || 0));
   const proposedUrl = String(raw.url || '').trim();
-  const url = isWayfairUrl(proposedUrl) ? proposedUrl : buildWayfairSearchUrl(name || category);
+  const url = isProductProviderUrl(proposedUrl, provider) ? proposedUrl : buildProductSearchUrl(provider, name || category);
   if (!name) return null;
   return {
     name,
@@ -194,18 +221,10 @@ const normalizeWayfairItem = (raw: any): WayfairBudgetItem | null => {
     unitPrice,
     totalPrice: Number((unitPrice * quantity).toFixed(2)),
     url,
-    validation: proposedUrl && isWayfairDirectProductUrl(proposedUrl) ? 'direct_product' : 'search_result',
+    validation: proposedUrl && isDirectProductUrl(proposedUrl, provider) ? 'direct_product' : 'search_result',
     note: String(raw.note || '').trim(),
   };
 };
-
-const PRODUCT_PROVIDERS = [
-  { id: 'wayfair', name: 'Wayfair', status: 'active', note: 'Fornecedor principal para decoracao compravel.' },
-  { id: 'home-depot', name: 'Home Depot', status: 'planned', note: 'Materiais e acabamentos de obra.' },
-  { id: 'ikea', name: 'IKEA', status: 'planned', note: 'Moveis modulares e economicos.' },
-  { id: 'west-elm', name: 'West Elm', status: 'planned', note: 'Decoracao premium.' },
-  { id: 'manual-catalog', name: 'Catalogo manual', status: 'planned', note: 'Lojas sem catalogo publico, como HomeSense.' },
-];
 
 const STYLE_GRADIENTS: Record<string, string> = {
   modern: 'from-[#2f1a35] via-[#7f187f] to-[#f2d2a9]',
@@ -242,7 +261,7 @@ const extractJsonObject = (text: string) => {
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start >= 0 && end > start) return text.slice(start, end + 1);
-  throw new Error('Wayfair response did not contain JSON.');
+  throw new Error('Shopping-list response did not contain JSON.');
 };
 
 const generateGeminiContent = async (payload: any) => {
@@ -269,20 +288,21 @@ const generateGeminiContent = async (payload: any) => {
   throw lastError || new Error('Gemini generation failed');
 };
 
-const generateWayfairBudget = async (
+const generateShoppingBudget = async (
   params: {
     roomLabel: string;
     styleLabel: string;
     designDescription: string;
     language: Language;
     budgetTier: BudgetTier;
+    provider: ProductProviderConfig;
   }
 ): Promise<{ items: WayfairBudgetItem[]; note: string }> => {
   const prompt = `
 You are a procurement-focused interior designer.
 
 TASK:
-Create a Wayfair-only shopping list for this generated interior design.
+Create a ${params.provider.name}-only shopping list for this generated interior design.
 
 ROOM: ${params.roomLabel}
 STYLE: ${params.styleLabel}
@@ -293,10 +313,10 @@ DESIGN DESCRIPTION:
 ${params.designDescription}
 
 STRICT PROCUREMENT RULES:
-1. Use ONLY products or product-searches from https://www.wayfair.com.
-2. Use Google Search to look for real Wayfair product pages or strong Wayfair category/search matches.
+1. Use ONLY products or product-searches from ${params.provider.baseUrl}.
+2. Use Google Search to look for real ${params.provider.name} product pages or strong ${params.provider.name} category/search matches.
 3. Do not invent product IDs, SKUs, seller names, brands or URLs.
-4. If a direct product page is not confidently found, use a Wayfair search URL for the exact item name.
+4. If a direct product page is not confidently found, use a ${params.provider.name} search URL for the exact item name.
 5. Return 6 to 10 items that could realistically compose this room: furniture, rug, lighting, wall decor, accents, storage and textiles.
 6. Prices must be realistic planning prices in USD. If exact current price is uncertain, use a conservative estimate and explain that in note.
 7. Respect the selected budget tier. The sum of quantity * unitPrice must fit the budget rule whenever the tier has a cap.
@@ -307,11 +327,11 @@ Return ONLY valid JSON:
   "note": "short procurement note in ${params.language === 'pt' ? 'Portuguese' : params.language === 'es' ? 'Spanish' : 'English'}",
   "items": [
     {
-      "name": "Wayfair-searchable product name",
+      "name": "${params.provider.name}-searchable product name",
       "category": "Sofa | Rug | Lighting | Decor | Storage | Table | Chair | Bedding | Bath | Outdoor",
       "quantity": 1,
       "unitPrice": 249.99,
-      "url": "https://www.wayfair.com/...",
+      "url": "${params.provider.baseUrl}/...",
       "note": "direct product if verified, otherwise search match"
     }
   ]
@@ -325,12 +345,12 @@ Return ONLY valid JSON:
 
   const parsed = JSON.parse(extractJsonObject(response.text || '{}'));
   const items = Array.isArray(parsed.items)
-    ? parsed.items.map(normalizeWayfairItem).filter(Boolean) as WayfairBudgetItem[]
+    ? parsed.items.map((item: any) => normalizeShoppingItem(item, params.provider)).filter(Boolean) as WayfairBudgetItem[]
     : [];
 
   return {
     items,
-    note: String(parsed.note || 'Wayfair shopping list generated with product links/search links for final validation.'),
+    note: String(parsed.note || `${params.provider.name} shopping list generated with product links/search links for final validation.`),
   };
 };
 
@@ -338,7 +358,7 @@ const TRANSLATIONS = {
   pt: {
     nav: { store: "Loja", login: "Entrar", credits: "créditos" },
     steps: { upload: "Foto do ambiente", room: "Cômodo", style: "Estilo", project: "Projeto e orçamento" },
-    upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera", heroEyebrow: "Design com IA + lista de compra", heroTitle: "Decore seu ambiente com peças reais para comprar", heroSubtitle: "A WayDecor transforma uma foto em uma proposta visual, preserva a estrutura do espaço e monta um orçamento item por item com produtos pesquisáveis na Wayfair.", featureDesign: "Imagem de encantamento", featureBudget: "Orçamento comprável", featureStructure: "Sem mexer na estrutura", demoBefore: "ambiente original", demoAfter: "visão projetada", procurementNote: "a proposta final separa móveis, iluminação, tapetes e decoração em uma lista de compra validável." },
+    upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera", heroEyebrow: "Design com IA + lista de compra", heroTitle: "Decore seu ambiente com peças reais para comprar", heroSubtitle: "A WayDecor transforma uma foto em uma proposta visual, preserva a estrutura do espaço e monta um orçamento item por item com produtos pesquisáveis em lojas como Wayfair e Target.", featureDesign: "Imagem de encantamento", featureBudget: "Orçamento comprável", featureStructure: "Sem mexer na estrutura", demoBefore: "ambiente original", demoAfter: "visão projetada", procurementNote: "a proposta final separa móveis, iluminação, tapetes e decoração em uma lista de compra validável." },
     roomSelect: { title: "Qual ambiente vamos transformar?", residential: "Residencial", commercial: "Comercial & Corporativo", next: "Próximo", customLabel: "Descreva seu ambiente:", customPlaceholder: "Ex: consultório pequeno, varanda gourmet, loja de roupas...", customRoom: "Descrever ambiente", autoRoom: "IA reconhece o ambiente", autoRoomHint: "A Luna identifica o cômodo pela foto e decora conforme o reconhecimento." },
     kidsConfig: { title: "Configuração do Quarto Infantil", age: "Idade", theme: "Tema", themePlaceholder: "Ex: Dinossauros...", gender: "Gênero", select: "Selecione...", boy: "Menino", girl: "Menina", neutral: "Neutro" },
     styleSelect: { title: "Escolha o estilo ideal", cost: "Custo", generate: "Gerar Transformação" },
@@ -360,7 +380,7 @@ const TRANSLATIONS = {
   en: {
     nav: { store: "Store", login: "Login", credits: "credits" },
     steps: { upload: "Room photo", room: "Room", style: "Style", project: "Project and budget" },
-    upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera", heroEyebrow: "AI design + shopping list", heroTitle: "Redesign your room with real products to buy", heroSubtitle: "WayDecor turns a photo into a visual proposal, preserves the room structure and builds an item-by-item budget with searchable Wayfair products.", featureDesign: "Visual transformation", featureBudget: "Buyable budget", featureStructure: "No structural edits", demoBefore: "original room", demoAfter: "projected vision", procurementNote: "the final proposal separates furniture, lighting, rugs and decor into a validated shopping list." },
+    upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera", heroEyebrow: "AI design + shopping list", heroTitle: "Redesign your room with real products to buy", heroSubtitle: "WayDecor turns a photo into a visual proposal, preserves the room structure and builds an item-by-item budget with searchable products from stores like Wayfair and Target.", featureDesign: "Visual transformation", featureBudget: "Buyable budget", featureStructure: "No structural edits", demoBefore: "original room", demoAfter: "projected vision", procurementNote: "the final proposal separates furniture, lighting, rugs and decor into a validated shopping list." },
     roomSelect: { title: "Which room are we transforming?", residential: "Residential", commercial: "Commercial", next: "Next", customLabel: "Describe your room:", customPlaceholder: "Ex: small clinic, gourmet balcony, clothing store...", customRoom: "Describe room", autoRoom: "AI recognizes the room", autoRoomHint: "Luna identifies the room from the photo and decorates based on that recognition." },
     kidsConfig: { title: "Kids Room Config", age: "Age", theme: "Theme", themePlaceholder: "Ex: Dinosaurs...", gender: "Gender", select: "Select...", boy: "Boy", girl: "Girl", neutral: "Neutral" },
     styleSelect: { title: "Choose ideal style", cost: "Cost", generate: "Generate" },
@@ -382,7 +402,7 @@ const TRANSLATIONS = {
   es: {
     nav: { store: "Tienda", login: "Entrar", credits: "créditos" },
     steps: { upload: "Foto del ambiente", room: "Ambiente", style: "Estilo", project: "Proyecto y presupuesto" },
-    upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara", heroEyebrow: "Diseño con IA + lista de compra", heroTitle: "Rediseña tu ambiente con productos reales para comprar", heroSubtitle: "WayDecor transforma una foto en una propuesta visual, preserva la estructura y crea un presupuesto por ítems con productos buscables en Wayfair.", featureDesign: "Imagen de impacto", featureBudget: "Presupuesto comprable", featureStructure: "Sin cambios estructurales", demoBefore: "ambiente original", demoAfter: "visión proyectada", procurementNote: "la propuesta final separa muebles, iluminación, alfombras y decoración en una lista de compra validable." },
+    upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara", heroEyebrow: "Diseño con IA + lista de compra", heroTitle: "Rediseña tu ambiente con productos reales para comprar", heroSubtitle: "WayDecor transforma una foto en una propuesta visual, preserva la estructura y crea un presupuesto por ítems con productos buscables en tiendas como Wayfair y Target.", featureDesign: "Imagen de impacto", featureBudget: "Presupuesto comprable", featureStructure: "Sin cambios estructurales", demoBefore: "ambiente original", demoAfter: "visión proyectada", procurementNote: "la propuesta final separa muebles, iluminación, alfombras y decoración en una lista de compra validable." },
     roomSelect: { title: "¿Qué ambiente transformamos?", residential: "Residencial", commercial: "Comercial", next: "Siguiente", customLabel: "Describe tu ambiente:", customPlaceholder: "Ej: clínica pequeña, balcón gourmet, tienda de ropa...", customRoom: "Describir ambiente", autoRoom: "IA reconoce el ambiente", autoRoomHint: "Luna identifica el ambiente por la foto y decora según ese reconocimiento." },
     kidsConfig: { title: "Config Habitación Infantil", age: "Edad", theme: "Tema", themePlaceholder: "Ej: Dinosaurios...", gender: "Género", select: "Seleccione...", boy: "Niño", girl: "Niña", neutral: "Neutro" },
     styleSelect: { title: "Elige estilo ideal", cost: "Costo", generate: "Generar" },
@@ -790,6 +810,7 @@ export default function App() {
   };
 
   const canProceedFromRoom = Boolean(selectedRoomId && (selectedRoomId !== 'custom_room' || customRoomType.trim().length >= 3));
+  const selectedProductProvider = getProductProvider(selectedProviderId);
   const selectedBudgetTier = getBudgetTier(selectedBudgetTierId);
 
   useEffect(() => {
@@ -964,7 +985,7 @@ export default function App() {
 		        2. COSMETIC DESIGN ONLY: You may change wall colors, wallpaper, paint effects, decorative panels, movable furniture, rugs, curtains, art, mirrors, plants and special lighting.
 		        3. LIGHTING UPGRADE: Add sophisticated lighting only as visible fixtures or lighting effects, not as structural changes.
 		        4. REDESIGN INTERIOR: Apply a new, sophisticated composition without changing the architecture, room dimensions, perspective or spatial disposition.
-		        5. WAYFAIR PROCUREMENT LOCK: The design must be executable with furniture, lighting, rugs, wall decor, storage, textiles and decorative items that can be sourced on Wayfair.com.
+	        5. PROCUREMENT LOCK: The design must be executable with furniture, lighting, rugs, wall decor, storage, textiles and decorative items that can be sourced on ${selectedProductProvider.name} (${selectedProductProvider.baseUrl}).
 		        6. Do not depend on custom-only or unbuyable pieces unless they are non-structural finishes already present in the room.
 		        7. Respect the selected budget tier. Match the visual ambition to the budget and avoid designing around items that would clearly exceed the selected range.
 		        8. The output description must explicitly instruct the renderer to edit the existing photo, not create a new room.
@@ -1030,17 +1051,18 @@ export default function App() {
 		             });
 		             setTransformationReport(reportRes.text || "Report unavailable.");
 	          }
-	          setLoadingMessage("Curando lista de compras Wayfair...");
+	          setLoadingMessage(`Curando lista de compras ${selectedProductProvider.name}...`);
 	          setWayfairBudget([]);
-	          const wayfairResult = await generateWayfairBudget({
+	          const shoppingResult = await generateShoppingBudget({
 	              roomLabel,
 	              styleLabel: STYLE_LABELS['en'][effectiveStyleId],
 	              designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
 	              language: lang,
 	              budgetTier: selectedBudgetTier,
+	              provider: selectedProductProvider,
 	          });
-	          setWayfairBudget(wayfairResult.items);
-	          setWayfairBudgetNote(wayfairResult.note);
+	          setWayfairBudget(shoppingResult.items);
+	          setWayfairBudgetNote(shoppingResult.note);
 	          setCurrentStep(4);
       } else {
           throw new Error("No image generated");
@@ -1070,9 +1092,9 @@ export default function App() {
 		            TASK: Create a Professional Project Briefing for the Carpenter/Contractor.
 		            LANGUAGE: ${lang === 'pt' ? 'Portuguese' : lang === 'es' ? 'Spanish' : 'English'}.
 		            SELECTED CLIENT BUDGET: ${getBudgetRangeLabel(selectedBudgetTier, lang)}.
-		            WAYFAIR PROCUREMENT LIST:
+		            ${selectedProductProvider.name.toUpperCase()} PROCUREMENT LIST:
 		            ${wayfairBudget.map(item => `- ${item.quantity}x ${item.name} (${item.category}) - ${toMoney(item.totalPrice)} - ${item.url}`).join('\n')}
-		            Include a short note that movable furniture/decor items were selected from Wayfair links/searches and must be checked for final availability before purchase.
+		            Include a short note that movable furniture/decor items were selected from ${selectedProductProvider.name} links/searches and must be checked for final availability before purchase.
 	            FORMAT: Plain text with headers.
 	         `;
          const res = await generateGeminiContent({ model: 'gemini-2.5-flash', contents: prompt });
@@ -1148,14 +1170,14 @@ export default function App() {
 	          doc.setFont("helvetica", "bold");
 	          doc.setFontSize(13);
 	          doc.setTextColor(217, 119, 6);
-	          doc.text("Orçamento Wayfair", margin, cursorY);
+	          doc.text(`Orçamento ${selectedProductProvider.name}`, margin, cursorY);
 	          cursorY += 8;
 	          doc.setFont("helvetica", "normal");
 		          doc.setFontSize(9);
 		          doc.setTextColor(40, 40, 40);
 		          const budgetLines = doc.splitTextToSize(
 		              `Budget selecionado: ${getBudgetRangeLabel(selectedBudgetTier, lang)}\n` +
-		              `${wayfairBudgetNote || 'Itens selecionados em Wayfair para validação final de disponibilidade e preço.'}\n\n` +
+		              `${wayfairBudgetNote || `Itens selecionados em ${selectedProductProvider.name} para validação final de disponibilidade e preço.`}\n\n` +
 		              wayfairBudget.map((item, index) =>
 		                  `${index + 1}. ${item.quantity}x ${item.name} | ${item.category} | ${toMoney(item.totalPrice)} | ${item.url}`
 		              ).join('\n'),
@@ -1359,7 +1381,7 @@ export default function App() {
                                 </button>
                             </div>
                             <div className="mt-6 rounded-lg bg-[#f7f3fb] border border-[#eadff2] p-4 text-sm text-[#6f6075] leading-relaxed">
-                                <span className="font-black text-[#2f1a35]">Wayfair-ready:</span> {t.upload.procurementNote}
+                                <span className="font-black text-[#2f1a35]">Shopping-ready:</span> {t.upload.procurementNote}
                             </div>
                         </section>
                         </div>
@@ -1452,7 +1474,7 @@ export default function App() {
 	                                    <p className="text-xs text-[#85758a]">Nesta versão, a decoração comprável fica travada no fornecedor ativo.</p>
 	                                </div>
 	                            </div>
-	                            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+	                            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
 	                                {PRODUCT_PROVIDERS.map(provider => (
 	                                    <button
 	                                        key={provider.id}
@@ -1471,7 +1493,7 @@ export default function App() {
 	                                <Coins className="w-5 h-5 text-[#7F187F]" />
 	                                <div>
 	                                    <h3 className="font-black text-[#2f1a35]">Budget do projeto</h3>
-	                                    <p className="text-xs text-[#85758a]">A decoração e a lista Wayfair serão calculadas conforme a faixa escolhida.</p>
+	                                    <p className="text-xs text-[#85758a]">A decoração e a lista da loja escolhida serão calculadas conforme a faixa escolhida.</p>
 	                                </div>
 	                            </div>
 	                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1522,16 +1544,16 @@ export default function App() {
 
 	                        <ComparisonSlider before={selectedImage} after={generatedImage} />
 
-	                        {/* WAYFAIR PROCUREMENT BUDGET */}
+	                        {/* PROCUREMENT BUDGET */}
 	                        <div className="bg-white border border-[#D57DEA]/40 rounded-2xl overflow-hidden shadow-xl">
 	                            <div className="p-5 border-b border-[#eadff2] flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 	                                <div>
 	                                    <div className="flex items-center gap-2 text-[#7F187F] font-black uppercase tracking-wide text-sm">
 	                                        <ShoppingBag className="w-4 h-4" />
-	                                        Wayfair Shopping List
+	                                        {selectedProductProvider.name} Shopping List
 	                                    </div>
 	                                    <p className="text-[#6f6075] text-sm mt-1">
-	                                        Itens móveis e decoração limitados à Wayfair, com link direto ou busca validável na loja.
+	                                        Itens móveis e decoração limitados à {selectedProductProvider.name}, com link direto ou busca validável na loja.
 	                                    </p>
 	                                    <div className="mt-3 flex flex-wrap gap-2">
 	                                        <span className="inline-flex items-center gap-1 rounded-full bg-[#f3e8ff] px-3 py-1 text-xs font-black text-[#7F187F]">
@@ -1572,7 +1594,7 @@ export default function App() {
 	                                            <div className="flex flex-wrap items-center gap-2">
 	                                                <span className="text-xs bg-[#f3e8ff] text-[#4b3650] px-2 py-1 rounded font-bold">{item.category}</span>
 	                                                <span className={`text-[10px] px-2 py-1 rounded uppercase font-black ${item.validation === 'direct_product' ? 'bg-[#e9f8ee] text-[#1f7a3f]' : 'bg-[#f3e8ff] text-[#7F187F]'}`}>
-	                                                    {item.validation === 'direct_product' ? 'produto Wayfair' : 'busca Wayfair'}
+	                                                    {item.validation === 'direct_product' ? `produto ${selectedProductProvider.name}` : `busca ${selectedProductProvider.name}`}
 	                                                </span>
 	                                            </div>
 	                                            <h3 className="font-bold text-[#2f1a35] mt-2">{item.quantity}x {item.name}</h3>
@@ -1588,7 +1610,7 @@ export default function App() {
 	                                                target="_blank"
 	                                                rel="noopener noreferrer"
 	                                                className="bg-[#f3e8ff] hover:bg-[#eadff2] border border-[#dac7e5] rounded-lg p-3 text-[#7F187F]"
-	                                                title="Abrir na Wayfair"
+	                                                title={`Abrir na ${selectedProductProvider.name}`}
 	                                            >
 	                                                <ExternalLink className="w-4 h-4" />
 	                                            </a>
@@ -1596,7 +1618,7 @@ export default function App() {
 	                                    </div>
 	                                )) : (
 	                                    <div className="p-5 text-sm text-[#6f6075]">
-	                                        A lista Wayfair ainda não foi gerada. Gere novamente a transformação para criar o orçamento por itens da loja.
+	                                        A lista da loja ainda não foi gerada. Gere novamente a transformação para criar o orçamento por itens.
 	                                    </div>
 	                                )}
 	                            </div>

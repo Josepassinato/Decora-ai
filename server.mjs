@@ -54,6 +54,14 @@ const PROVIDERS = [
     note: 'Indicado para materiais de obra e acabamentos, nao para decoracao fina.',
   },
   {
+    id: 'target',
+    name: 'Target',
+    status: 'active',
+    validation: 'direct-link-or-search',
+    searchUrl: 'https://www.target.com/s?searchTerm=',
+    note: 'Objetos de decoracao, iluminacao simples, textiles e acentos acessiveis.',
+  },
+  {
     id: 'ikea',
     name: 'IKEA',
     status: 'planned',
@@ -262,6 +270,7 @@ const isProviderUrl = (url, providerId) => {
   try {
     const host = new URL(url).hostname;
     if (providerId === 'wayfair') return host === 'wayfair.com' || host.endsWith('.wayfair.com');
+    if (providerId === 'target') return host === 'target.com' || host.endsWith('.target.com');
     if (providerId === 'home-depot') return host === 'homedepot.com' || host.endsWith('.homedepot.com');
     if (providerId === 'ikea') return host === 'ikea.com' || host.endsWith('.ikea.com');
     if (providerId === 'west-elm') return host === 'westelm.com' || host.endsWith('.westelm.com');
@@ -276,6 +285,7 @@ const isDirectProductUrl = (url, providerId) => {
     const parsed = new URL(url);
     if (!isProviderUrl(url, providerId)) return false;
     if (providerId === 'wayfair') return !parsed.pathname.includes('keyword.php');
+    if (providerId === 'target') return parsed.pathname.includes('/p/');
     if (providerId === 'home-depot') return !parsed.pathname.startsWith('/s/');
     if (providerId === 'ikea') return !parsed.pathname.includes('/search/');
     if (providerId === 'west-elm') return !parsed.pathname.includes('/search/');
