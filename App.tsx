@@ -981,10 +981,10 @@ export default function App() {
         ${overrideMaterial ? `MANDATORY MATERIAL OVERRIDE: All furniture and joinery MUST USE: ${overrideMaterial}.` : ''}
         
 		        INSTRUCTIONS:
-		        1. ANALYZE STRUCTURE: Preserve the exact room shell. Do not change walls, windows, doors, columns, stairs, ceiling geometry, fixed openings, dimensions, proportions or camera viewpoint.
-		        2. FURNITURE & DECOR ONLY: Add or replace ONLY movable items — furniture, rugs, curtains, art, mirrors, plants, freestanding lamps and decor objects. NEVER change wall color/finish, wallpaper, wall paneling/cladding, ceiling, floor finish, windows/view, or built-in / ceiling / wall-mounted lighting. Every surface of the room stays EXACTLY as photographed.
-		        3. LIGHTING: Keep the existing ceiling and wall lighting exactly as in the photo. You may only ADD freestanding lamps (floor/table) as movable objects. Never add track lights, recessed lights, LED strips or change the ceiling.
-		        4. STYLE VIA MOVABLE ITEMS ONLY: Express the target style ONLY through movable furniture and decor. If the style implies wall paneling, built-in joinery, ceiling systems, flooring or permanent lighting, IGNORE those aspects — the room shell and all its finishes are immutable.
+		        1. GEOMETRY LOCK (ABSOLUTE): Keep the EXACT room dimensions, proportions and shape. Do NOT move, resize, add or remove any wall, window, door, column, stair, beam or ceiling edge. Keep every opening in the same position and size. Keep the same camera viewpoint, lens, perspective and crop. The room's geometry/footprint is immutable.
+		        2. WHAT YOU MAY CHANGE: Within that fixed geometry you MAY restyle freely — wall colors, paint, wallpaper, wall paneling/cladding, flooring finish, ceiling finish, lighting (fixtures, track, recessed, LED, ambiance) AND all furniture, rugs, curtains, art, mirrors, plants and decor.
+		        3. LIGHTING: Lighting may change — add or upgrade fixtures and lighting effects freely, as long as the ceiling/wall SHAPE and positions do not change.
+		        4. APPLY THE STYLE: Express the target style through finishes, lighting and furniture — but never by altering the room's size, shape, layout or perspective.
 	        5. PROCUREMENT LOCK: The design must be executable with furniture, lighting, rugs, wall decor, storage, textiles and decorative items that can be sourced on ${selectedProductProvider.name} (${selectedProductProvider.baseUrl}).
 		        6. Do not depend on custom-only or unbuyable pieces unless they are non-structural finishes already present in the room.
 		        7. Respect the selected budget tier. Match the visual ambition to the budget and avoid designing around items that would clearly exceed the selected range.
@@ -1010,10 +1010,9 @@ export default function App() {
 
 		        TASK: PHOTO-REALISTIC IMAGE EDIT OF THE SAME ROOM.
 		        INPUT IMAGE: This is the IMMUTABLE SHELL and the camera reference.
-		        STRUCTURAL WARNING: Keep all existing walls, doors, windows, ceiling shape, floor plan, columns, stairs and fixed openings exactly where they are. Only cosmetic and movable-item changes are allowed.
-		        DIMENSION WARNING: The output must have the same room dimensions, same proportions, same camera angle, same lens perspective, same crop and same spatial disposition as the original photo.
-		        DO NOT: change the room size, layout, camera, depth, walls, ceiling, floor or windows. DO NOT repaint walls, change wall/ceiling/floor finishes, add wall paneling/cladding/wallpaper, or change/add ceiling or wall lighting fixtures. The room shell and ALL its surfaces stay identical to the input photo.
-		        DO: add or replace ONLY movable items — rugs, sofas, chairs, curtains, tables, freestanding lamps, art, mirrors, plants and decor — that fit the existing room exactly. Express the chosen style through these movable pieces ONLY.
+		        GEOMETRY WARNING (ABSOLUTE): Keep the EXACT room dimensions, proportions and shape. Every wall, door, window, ceiling edge, column, stair and opening must stay in the SAME position and SAME size. Do not move, resize, add or remove any of them. Keep the same camera angle, lens, perspective, crop and spatial disposition as the original photo.
+		        DO NOT: change the room's size, shape, layout, proportions, perspective or camera; do not move/add/remove walls, windows, doors, openings or change ceiling/floor geometry.
+		        DO (within the fixed geometry): freely restyle — repaint, wallpaper, wall paneling/cladding, flooring finish, ceiling finish, lighting (add/upgrade fixtures, track, recessed, LED, ambiance) — and add/replace furniture, rugs, curtains, tables, lamps, art, mirrors, plants and decor. The look can change a lot; the room's geometry cannot.
 	        
 	        NEW DESIGN INSTRUCTION:
         ${enhancedDescription}
