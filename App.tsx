@@ -982,9 +982,9 @@ export default function App() {
         
 		        INSTRUCTIONS:
 		        1. ANALYZE STRUCTURE: Preserve the exact room shell. Do not change walls, windows, doors, columns, stairs, ceiling geometry, fixed openings, dimensions, proportions or camera viewpoint.
-		        2. COSMETIC DESIGN ONLY: You may change wall colors, wallpaper, paint effects, decorative panels, movable furniture, rugs, curtains, art, mirrors, plants and special lighting.
-		        3. LIGHTING UPGRADE: Add sophisticated lighting only as visible fixtures or lighting effects, not as structural changes.
-		        4. REDESIGN INTERIOR: Apply a new, sophisticated composition without changing the architecture, room dimensions, perspective or spatial disposition.
+		        2. FURNITURE & DECOR ONLY: Add or replace ONLY movable items — furniture, rugs, curtains, art, mirrors, plants, freestanding lamps and decor objects. NEVER change wall color/finish, wallpaper, wall paneling/cladding, ceiling, floor finish, windows/view, or built-in / ceiling / wall-mounted lighting. Every surface of the room stays EXACTLY as photographed.
+		        3. LIGHTING: Keep the existing ceiling and wall lighting exactly as in the photo. You may only ADD freestanding lamps (floor/table) as movable objects. Never add track lights, recessed lights, LED strips or change the ceiling.
+		        4. STYLE VIA MOVABLE ITEMS ONLY: Express the target style ONLY through movable furniture and decor. If the style implies wall paneling, built-in joinery, ceiling systems, flooring or permanent lighting, IGNORE those aspects — the room shell and all its finishes are immutable.
 	        5. PROCUREMENT LOCK: The design must be executable with furniture, lighting, rugs, wall decor, storage, textiles and decorative items that can be sourced on ${selectedProductProvider.name} (${selectedProductProvider.baseUrl}).
 		        6. Do not depend on custom-only or unbuyable pieces unless they are non-structural finishes already present in the room.
 		        7. Respect the selected budget tier. Match the visual ambition to the budget and avoid designing around items that would clearly exceed the selected range.
@@ -1012,8 +1012,8 @@ export default function App() {
 		        INPUT IMAGE: This is the IMMUTABLE SHELL and the camera reference.
 		        STRUCTURAL WARNING: Keep all existing walls, doors, windows, ceiling shape, floor plan, columns, stairs and fixed openings exactly where they are. Only cosmetic and movable-item changes are allowed.
 		        DIMENSION WARNING: The output must have the same room dimensions, same proportions, same camera angle, same lens perspective, same crop and same spatial disposition as the original photo.
-		        DO NOT: change the room size, change the room layout, move the camera, add depth, remove depth, open walls, close walls, move furniture that already defines the room scale unless replacing it with a similarly scaled movable item.
-		        DO: repaint, add wallpaper, add removable wall treatment, change lighting fixtures/effects, add rugs, sofas, chairs, curtains, tables, lamps, art, mirrors, plants and decor that fit the existing room exactly.
+		        DO NOT: change the room size, layout, camera, depth, walls, ceiling, floor or windows. DO NOT repaint walls, change wall/ceiling/floor finishes, add wall paneling/cladding/wallpaper, or change/add ceiling or wall lighting fixtures. The room shell and ALL its surfaces stay identical to the input photo.
+		        DO: add or replace ONLY movable items — rugs, sofas, chairs, curtains, tables, freestanding lamps, art, mirrors, plants and decor — that fit the existing room exactly. Express the chosen style through these movable pieces ONLY.
 	        
 	        NEW DESIGN INSTRUCTION:
         ${enhancedDescription}
