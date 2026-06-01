@@ -566,6 +566,69 @@ const ComparisonSlider: FC<{
   );
 };
 
+const HeroComparisonPhoto: FC<{
+  image: string;
+  beforeLabel: string;
+  afterLabel: string;
+}> = ({ image, beforeLabel, afterLabel }) => {
+  const [sliderPosition, setSliderPosition] = useState(50);
+  const [manualMode, setManualMode] = useState(false);
+
+  useEffect(() => {
+    if (manualMode) return;
+    let frame = 0;
+    const timer = window.setInterval(() => {
+      frame += 1;
+      const wave = (Math.sin(frame / 24) + 1) / 2;
+      setSliderPosition(10 + wave * 80);
+    }, 45);
+    return () => window.clearInterval(timer);
+  }, [manualMode]);
+
+  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+    const x = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    setManualMode(true);
+    setSliderPosition(Math.max(4, Math.min(96, ((x - rect.left) / rect.width) * 100)));
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-xl border border-[#eadff2] bg-[#f8f4fa] cursor-ew-resize select-none"
+      onMouseMove={handleMove}
+      onTouchMove={handleMove}
+      onMouseLeave={() => setManualMode(false)}
+      onTouchEnd={() => setManualMode(false)}
+    >
+      <img
+        src={image}
+        alt={`${beforeLabel} / ${afterLabel}`}
+        className="w-full h-48 sm:h-64 md:h-80 object-cover"
+      />
+      <div
+        className="absolute top-0 bottom-0 w-[3px] bg-white shadow-[0_0_22px_rgba(255,255,255,0.95)] transition-[left] duration-75"
+        style={{ left: `${sliderPosition}%` }}
+      />
+      <div
+        className="absolute top-1/2 -mt-6 -ml-6 w-12 h-12 rounded-full bg-white/95 text-[#7F187F] shadow-2xl border border-[#eadff2] flex items-center justify-center transition-[left] duration-75"
+        style={{ left: `${sliderPosition}%` }}
+        aria-hidden="true"
+      >
+        <div className="flex gap-1 text-sm font-black">
+          <span>&lt;</span>
+          <span>&gt;</span>
+        </div>
+      </div>
+      <div
+        className="absolute inset-y-0 bg-white/10 backdrop-blur-[1px] pointer-events-none transition-[width] duration-75"
+        style={{ width: `${sliderPosition}%` }}
+      />
+      <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs uppercase tracking-wide font-bold">{beforeLabel}</div>
+      <div className="absolute bottom-4 right-4 bg-[#7F187F]/90 text-white px-3 py-1 rounded-full text-xs uppercase tracking-wide font-bold">{afterLabel}</div>
+    </div>
+  );
+};
+
 const Spinner: FC<{ message: string }> = ({ message }) => (
   <div className="flex flex-col items-center justify-center p-12 text-center animate-fade-in">
     <div className="relative w-24 h-24 mb-6">
@@ -1145,15 +1208,11 @@ export default function App() {
                             </div>
 
                             <div className="block bg-white border border-[#eadff2] rounded-2xl overflow-hidden shadow-xl p-2">
-                                <div className="relative overflow-hidden rounded-xl border border-[#eadff2] bg-[#f8f4fa]">
-                                    <img
-                                        src={DECORE_HERO_COMPARISON}
-                                        alt={`${t.upload.demoBefore} / ${t.upload.demoAfter}`}
-                                        className="w-full h-48 sm:h-64 md:h-80 object-cover"
-                                    />
-                                    <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs uppercase tracking-wide font-bold">{t.upload.demoBefore}</div>
-                                    <div className="absolute bottom-4 right-4 bg-[#7F187F]/90 text-white px-3 py-1 rounded-full text-xs uppercase tracking-wide font-bold">{t.upload.demoAfter}</div>
-                                </div>
+                                <HeroComparisonPhoto
+                                    image={DECORE_HERO_COMPARISON}
+                                    beforeLabel={t.upload.demoBefore}
+                                    afterLabel={t.upload.demoAfter}
+                                />
                             </div>
                         </section>
 
