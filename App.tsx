@@ -44,8 +44,8 @@ try {
 }
 
 // --- REDIMENSIONAMENTO DE IMAGEM (CLIENT SIDE) ---
-const resizeImage = (base64Str: string, maxWidth = 1536, maxHeight = 1536): Promise<string> => {
-  return new Promise((resolve) => {
+const resizeImage = (base64Str: string, maxWidth = 1280, maxHeight = 1280): Promise<string> => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     img.src = base64Str;
     img.onload = () => {
@@ -68,9 +68,9 @@ const resizeImage = (base64Str: string, maxWidth = 1536, maxHeight = 1536): Prom
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', 0.85)); // 85% quality
+      resolve(canvas.toDataURL('image/jpeg', 0.78));
     };
-    img.onerror = () => resolve(base64Str);
+    img.onerror = () => reject(new Error('Formato de imagem não suportado. Use JPG, PNG ou tire uma nova foto pela câmera.'));
   });
 };
 
@@ -186,16 +186,27 @@ const extractJsonObject = (text: string) => {
 };
 
 const generateGeminiContent = async (payload: any) => {
-  const response = await fetch('/api/gemini/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || data.error || 'Gemini generation failed');
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch('/api/gemini/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) return data;
+
+      const message = data.message || data.error || 'Gemini generation failed';
+      lastError = new Error(message);
+      if (![502, 503, 504].includes(response.status) || attempt === 2) throw lastError;
+    } catch (error: any) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt === 2) throw lastError;
+    }
+    await new Promise(resolve => window.setTimeout(resolve, 1200 + attempt * 1300));
   }
-  return data;
+  throw lastError || new Error('Gemini generation failed');
 };
 
 const generateWayfairBudget = async (
@@ -960,7 +971,7 @@ export default function App() {
 
     } catch (e) {
       console.error(e);
-      alert("Erro na geração. Tente novamente.");
+      alert(`Erro na geração: ${e instanceof Error ? e.message : 'tente novamente.'}`);
     } finally {
       setIsGenerating(false);
       setLoadingMessage('');
