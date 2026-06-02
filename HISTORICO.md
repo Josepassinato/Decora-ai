@@ -47,6 +47,39 @@ AI: Gemini 2.5 Flash (texto) + Gemini 2.5 Flash Image (renderer)
 - [ ] `/api/config` retorna `[]` — `DEFAULT_SYSTEM_MEMORY` ainda governa. Avaliar se o painel admin de protocols (`ARCHITECT_PROTOCOL`, `RENDERER_PROTOCOL`) está integrado
 - [ ] Bundle 696KB único — Vite avisou pra code-split
 
+### 2026-06-02 — Architectural Recognition step (3-pass pipeline)
+**Commit:** `bc4ca24`
+
+**Pedido:** afinar fidelidade — IA deve reconhecer o ambiente, medir paredes, portas, janelas e **profundidade** (corredores), e preservar tudo na geração.
+
+**Solução:** novo passo LLM-0 ANTES do creative.
+
+**Pipeline atual de geração (3 chamadas Gemini):**
+1. **LLM-0 — Architectural Survey** (NOVO, `gemini-2.5-flash` + imagem)
+   - Surveyor mapeia 10 seções: shape · wall-lengths (ratios) · ceiling · floor · windows (qty/posição/W×H) · doors/openings · fixed elements (colunas, vigas, escadas) · **depth & vanishing point** · camera/lens/crop · lighting
+   - Output puro factual, sem propor design
+   - Resultado salvo em `architecturalGroundTruth`
+2. **LLM-1 — Creative** (`gemini-2.5-flash`) recebe survey como "IMMUTABLE FACTS"
+3. **LLM-2 — Render** (`gemini-2.5-flash-image`) recebe foto + creative + 3 locks novos:
+   - DEPTH AND PERSPECTIVE LOCK
+   - WALL-LENGTH LOCK
+   - OPENINGS LOCK (toda porta/janela do survey, mesma posição, mesmo tamanho)
+   - FINAL OVERRIDE: se creative conflita com survey, survey vence
+
+**Custo:** +1 chamada gemini-2.5-flash (~$0 + ~2s latência) — vale o ganho
+
+**i18n:** `loading.recognize` adicionado em pt/en/es
+
+**Estado pós-deploy:**
+- ✅ Bundle live `index-De7VtFAu.js`
+- ✅ Push `origin/main` OK (bc4ca24)
+- ✅ pm2 decora-api online
+
+**Pendente:**
+- [ ] Validar com foto de corredor profundo — perspectiva deve preservar
+- [ ] Considerar cache do groundTruth por foto (hash) pra evitar re-survey em quickSwitch/material override
+- [ ] Migrar Tailwind CDN runtime → Tailwind v4 inline (risco recorrente)
+
 ## Endpoints
 - `GET /api/health` → `{ok, storage, database}`
 - `GET /api/providers` → lista de lojas (Wayfair, Target, ...)
