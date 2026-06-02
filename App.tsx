@@ -377,7 +377,7 @@ const TRANSLATIONS = {
       artDirectorTitle: "Relatório de Design", savePdf: "Salvar PDF" 
     },
     paywall: { title: "Loja de Créditos", subtitle: "Desbloqueie o poder da IA.", consumptionTable: "Consumo", choose: "Pacotes", popular: "POPULAR", buy: "Comprar", secure: "Seguro via Stripe" },
-    loading: { photo: "O Fotógrafo está analisando...", design: "Sistema Blindado: Ocupando Paredes com Madeira/Pedra (Sem Janelas)...", rendering: "Renderizando imagem final...", report: "Gerando relatório...", tech: "Gerando briefing técnico...", connection: "Conectando...", seeding: "Sincronizando Banco de Dados de Estilos..." },
+    loading: { photo: "O Fotógrafo está analisando...", recognize: "Reconhecendo o ambiente: paredes, portas, janelas e profundidade...", design: "Sistema Blindado: Ocupando Paredes com Madeira/Pedra (Sem Janelas)...", rendering: "Renderizando imagem final...", report: "Gerando relatório...", tech: "Gerando briefing técnico...", connection: "Conectando...", seeding: "Sincronizando Banco de Dados de Estilos..." },
     items: { fullTransform: "Transformação (Render 8K)", extraViews: "Expansión (3 Ângulos)", techReport: "Briefing Técnico" }
   },
   en: {
@@ -399,7 +399,7 @@ const TRANSLATIONS = {
       artDirectorTitle: "Design Report", savePdf: "Save PDF" 
     },
     paywall: { title: "Credits Store", subtitle: "Unlock AI power.", consumptionTable: "Consumption", choose: "Packages", popular: "POPULAR", buy: "Buy", secure: "Secure via Stripe" },
-    loading: { photo: "Photographer analyzing...", design: "System Locked: Cladding Walls (No Window Policy)...", rendering: "Rendering final image...", report: "Generating report...", tech: "Generating technical briefing...", connection: "Connecting...", seeding: "Syncing Style Database..." },
+    loading: { photo: "Photographer analyzing...", recognize: "Surveying the room: walls, doors, windows and depth...", design: "System Locked: Cladding Walls (No Window Policy)...", rendering: "Rendering final image...", report: "Generating report...", tech: "Generating technical briefing...", connection: "Connecting...", seeding: "Syncing Style Database..." },
     items: { fullTransform: "Transformation (8K)", extraViews: "Expansion (3 Angles)", techReport: "Tech Briefing" }
   },
   es: {
@@ -421,7 +421,7 @@ const TRANSLATIONS = {
       artDirectorTitle: "Informe de Diseño", savePdf: "Guardar PDF" 
     },
     paywall: { title: "Tienda de Créditos", subtitle: "Desbloquea la IA.", consumptionTable: "Consumo", choose: "Paquetes", popular: "POPULAR", buy: "Comprar", secure: "Seguro via Stripe" },
-    loading: { photo: "Fotógrafo analizando...", design: "Sistema Blindado: Ocupando Paredes con Madera/Piedra...", rendering: "Renderizando imagen final...", report: "Generando informe...", tech: "Generando briefing técnico...", connection: "Conectando...", seeding: "Sincronizando Base de Datos..." },
+    loading: { photo: "Fotógrafo analizando...", recognize: "Relevando el ambiente: paredes, puertas, ventanas y profundidad...", design: "Sistema Blindado: Ocupando Paredes con Madera/Piedra...", rendering: "Renderizando imagen final...", report: "Generando informe...", tech: "Generando briefing técnico...", connection: "Conectando...", seeding: "Sincronizando Base de Datos..." },
     items: { fullTransform: "Transformación (8K)", extraViews: "Expansión (3 Ángulos)", techReport: "Briefing Técnico" }
   }
 };
@@ -987,6 +987,47 @@ export default function App() {
           ? `Target Style: ${STYLE_LABELS['en'][effectiveStyleId]} (${style?.prompt_modifier || 'High-end design'})`
           : `Target Style: Designer's choice. Pick a tasteful, high-end style that suits the room type, the existing architecture and the selected budget. Lean contemporary unless the room screams otherwise.`;
 
+      // --- STEP 0: ARCHITECTURAL RECOGNITION ---
+      // Antes de pensar em decoracao, mapeamos a geometria da foto: paredes,
+      // portas, janelas, profundidade, angulo de camera. Isso vira FACT SHEET
+      // injetado no creative + renderer pra travar fidelidade ao ambiente.
+      setLoadingMessage(t.loading.recognize || t.loading.design);
+
+      const optimizedBase64 = await resizeImage(selectedImage);
+      const base64Data = optimizedBase64.split(',')[1];
+
+      const recognitionPrompt = `
+        You are an architectural surveyor. You are looking at a photo of an interior room.
+        Your single job: produce a precise, factual "MEASURED GROUND TRUTH" of the room geometry visible in the photo.
+        Do NOT propose any design or decoration. Do NOT speculate on style. Output FACTS only.
+
+        Report exactly these fields (be specific, use relative proportions when no metric is available):
+
+        1) ROOM SHAPE: number of visible walls, overall footprint shape (rectangular / L-shaped / corridor / open-plan / etc).
+        2) WALL LENGTHS (relative): for each visible wall, estimate length as a ratio (e.g., "back wall ≈ 1.0, left wall ≈ 1.4, right wall ≈ 0.6") and describe each by its position (back / left / right / front-right cut / etc).
+        3) CEILING: height impression (low / standard / high / double-height) and any visible features (beams, drops, coffers, slopes, skylights). If flat and plain, say so.
+        4) FLOOR: visible material and pattern direction.
+        5) WINDOWS: for EACH visible window, report (position on which wall, approximate width, approximate height, sill height, frame style). If none, say "no visible windows".
+        6) DOORS / OPENINGS: for EACH visible door or opening, report (position, width, height, whether door is present and its style, or just opening). Include closet doors, archways, pass-throughs.
+        7) FIXED ARCHITECTURAL ELEMENTS: columns, beams, niches, stairs, fireplaces, built-in shelves, plumbing fixtures (sinks, toilets), kitchen counters/cabinets — list each with its position. Say "none" if absent.
+        8) DEPTH / PERSPECTIVE: is the room shallow (camera close to back wall) or deep (long perspective into the room — e.g., corridor)? Estimate the depth ratio (room depth vs width). Mention vanishing point location.
+        9) CAMERA: viewpoint (eye-level / low / high / from a corner / through a door), apparent lens (normal / wide-angle / very-wide), aspect ratio of the photo, crop tightness.
+        10) LIGHTING SOURCES VISIBLE: existing light fixtures (ceiling lights, sconces, lamps) and natural light direction.
+
+        Output as a tight bullet list with these 10 sections. No prose around it. No suggestions.
+      `;
+
+      const recognitionRes = await generateGeminiContent({
+        model: 'gemini-2.5-flash',
+        contents: {
+          parts: [
+            { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
+            { text: recognitionPrompt }
+          ]
+        }
+      });
+      const architecturalGroundTruth = (recognitionRes?.text || '').trim();
+
       setLoadingMessage(t.loading.design);
 
       // USE DYNAMIC SYSTEM MEMORY HERE
@@ -996,6 +1037,9 @@ export default function App() {
         Act as a Senior Interior Architect.
         ${styleDirectionLine}
         ${roomInstruction}
+
+        MEASURED GROUND TRUTH OF THE EXISTING ROOM (from a prior architectural survey of the photo — TREAT AS IMMUTABLE FACTS, NEVER PROPOSE CHANGING ANY OF THESE):
+        ${architecturalGroundTruth || '(survey unavailable — preserve every visible architectural element of the input photo exactly)'}
         BUDGET TIER: ${getBudgetRangeLabel(selectedBudgetTier, 'en')}
         BUDGET DISCIPLINE: ${budgetInstruction}
         ${selectedRoomId === 'bedroom_kids' ? `Kids Config: Age ${childAge}, Theme ${childTheme}, Gender ${childGender}.` : ''}
@@ -1031,10 +1075,8 @@ export default function App() {
       const enhancedDescription = creativeRes.text;
 
       setLoadingMessage(t.loading.rendering);
+      // base64Data ja foi gerado no STEP 0 (recognition) e e reusado aqui.
 
-      const optimizedBase64 = await resizeImage(selectedImage);
-      const base64Data = optimizedBase64.split(',')[1];
-      
       const renderPrompt = `
         ${systemMemory.RENDERER_PROTOCOL}
 
@@ -1043,13 +1085,23 @@ export default function App() {
 		        GEOMETRY WARNING (ABSOLUTE): Keep the EXACT room dimensions, proportions and shape. Every wall, door, window, ceiling edge, column, stair and opening must stay in the SAME position and SAME size. Do not move, resize, add or remove any of them. Keep the same camera angle, lens, perspective, crop and spatial disposition as the original photo.
 		        DO NOT: change the room's size, shape, layout, proportions, perspective or camera; do not move/add/remove walls, windows, doors, openings or change ceiling/floor geometry.
 		        DO (within the fixed geometry): freely restyle — repaint, wallpaper, wall paneling/cladding, flooring finish, ceiling finish, lighting (add/upgrade fixtures, track, recessed, LED, ambiance) — and add/replace furniture, rugs, curtains, tables, lamps, art, mirrors, plants and decor. The look can change a lot; the room's geometry cannot.
-	        
+
+		        MEASURED GROUND TRUTH OF THIS EXACT ROOM (from architectural survey of the input photo — these are FACTS, every single one must be preserved pixel-for-pixel in the output):
+		        ${architecturalGroundTruth || '(survey unavailable — preserve every visible architectural element of the input photo exactly)'}
+
+		        DEPTH AND PERSPECTIVE LOCK: The room's depth, perspective, vanishing point and camera-to-back-wall distance described in the survey above MUST be preserved exactly. If the survey says the room is a long corridor with deep perspective, the output must remain a long corridor with the same deep perspective — do not shorten it, do not widen it, do not flatten the perspective.
+
+		        WALL-LENGTH LOCK: The relative wall lengths described in the survey are non-negotiable. Do not stretch or shrink any wall.
+
+		        OPENINGS LOCK: Every window and door listed in the survey must appear in the output at the SAME wall, SAME position along the wall, SAME width and SAME height. Do not add a window or door that isn't in the survey. Do not remove one that is.
+
 	        NEW DESIGN INSTRUCTION (apply ONLY to surfaces, lighting and movable items — never to geometry):
         ${enhancedDescription}
         ${overrideMaterial ? `MATERIAL OVERRIDE: Apply ${overrideMaterial} to all new furniture.` : ''}
 
         FINAL OVERRIDE (defense-in-depth — beats anything above):
         - If ANY part of the design instruction above suggests moving, adding, removing, resizing or reshaping a wall, window, door, opening, ceiling, floor, column, stair, beam, balcony, loft, fireplace, or changing room dimensions/proportions/perspective/camera, IGNORE THAT PART.
+        - If ANY part of the design instruction conflicts with the MEASURED GROUND TRUTH above, the survey wins. Always.
         - Treat the input image as a locked architectural shell. Restyle it; do not redesign it.
         - The output image MUST be a photo-edit of the SAME room from the SAME viewpoint — not a new generation.
 
