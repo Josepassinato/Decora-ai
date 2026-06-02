@@ -361,7 +361,7 @@ const TRANSLATIONS = {
     upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera", heroEyebrow: "Design com IA + lista de compra", heroTitle: "Decore seu ambiente com peças reais para comprar", heroSubtitle: "A WayDecor transforma uma foto em uma proposta visual, preserva a estrutura do espaço e monta um orçamento item por item com produtos pesquisáveis em lojas como Wayfair e Target.", featureDesign: "Imagem de encantamento", featureBudget: "Orçamento comprável", featureStructure: "Sem mexer na estrutura", demoBefore: "ambiente original", demoAfter: "visão projetada", procurementNote: "a proposta final separa móveis, iluminação, tapetes e decoração em uma lista de compra validável." },
     roomSelect: { title: "Qual ambiente vamos transformar?", residential: "Residencial", commercial: "Comercial & Corporativo", next: "Próximo", customLabel: "Descreva seu ambiente:", customPlaceholder: "Ex: consultório pequeno, varanda gourmet, loja de roupas...", customRoom: "Descrever ambiente", autoRoom: "IA reconhece o ambiente", autoRoomHint: "A Luna identifica o cômodo pela foto e decora conforme o reconhecimento." },
     kidsConfig: { title: "Configuração do Quarto Infantil", age: "Idade", theme: "Tema", themePlaceholder: "Ex: Dinossauros...", gender: "Gênero", select: "Selecione...", boy: "Menino", girl: "Menina", neutral: "Neutro" },
-    styleSelect: { title: "Escolha o estilo ideal", cost: "Custo", generate: "Gerar Transformação" },
+    styleSelect: { title: "Escolha a loja e o estilo", cost: "Custo", generate: "Gerar Transformação", storeTitle: "1. Loja do inventário", storeSubtitle: "Escolha qual loja será usada para montar a decoração e o orçamento item por item.", budgetTitle: "2. Budget do projeto", budgetSubtitle: "A lista da loja escolhida será calculada conforme a faixa escolhida.", styleTitle: "3. Estilo de decoração", styleSubtitle: "Escolha o estilo antes de gerar a imagem de encantamento.", missingStore: "Escolha a loja do inventário", missingStyle: "Escolha o estilo de decoração" },
     results: { 
       title: "Transformação Pronta!", subtitle: "Compare o Antes e Depois.", 
       download: "Baixar Imagem", 
@@ -383,7 +383,7 @@ const TRANSLATIONS = {
     upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera", heroEyebrow: "AI design + shopping list", heroTitle: "Redesign your room with real products to buy", heroSubtitle: "WayDecor turns a photo into a visual proposal, preserves the room structure and builds an item-by-item budget with searchable products from stores like Wayfair and Target.", featureDesign: "Visual transformation", featureBudget: "Buyable budget", featureStructure: "No structural edits", demoBefore: "original room", demoAfter: "projected vision", procurementNote: "the final proposal separates furniture, lighting, rugs and decor into a validated shopping list." },
     roomSelect: { title: "Which room are we transforming?", residential: "Residential", commercial: "Commercial", next: "Next", customLabel: "Describe your room:", customPlaceholder: "Ex: small clinic, gourmet balcony, clothing store...", customRoom: "Describe room", autoRoom: "AI recognizes the room", autoRoomHint: "Luna identifies the room from the photo and decorates based on that recognition." },
     kidsConfig: { title: "Kids Room Config", age: "Age", theme: "Theme", themePlaceholder: "Ex: Dinosaurs...", gender: "Gender", select: "Select...", boy: "Boy", girl: "Girl", neutral: "Neutral" },
-    styleSelect: { title: "Choose ideal style", cost: "Cost", generate: "Generate" },
+    styleSelect: { title: "Choose store and style", cost: "Cost", generate: "Generate", storeTitle: "1. Inventory store", storeSubtitle: "Choose which store will be used for the decoration and item-by-item budget.", budgetTitle: "2. Project budget", budgetSubtitle: "The selected store list will be calculated according to this budget range.", styleTitle: "3. Decor style", styleSubtitle: "Choose the style before generating the visual transformation.", missingStore: "Choose the inventory store", missingStyle: "Choose the decor style" },
     results: { 
       title: "Transformation Ready!", subtitle: "Compare Before and After.", 
       download: "Download Image", 
@@ -405,7 +405,7 @@ const TRANSLATIONS = {
     upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara", heroEyebrow: "Diseño con IA + lista de compra", heroTitle: "Rediseña tu ambiente con productos reales para comprar", heroSubtitle: "WayDecor transforma una foto en una propuesta visual, preserva la estructura y crea un presupuesto por ítems con productos buscables en tiendas como Wayfair y Target.", featureDesign: "Imagen de impacto", featureBudget: "Presupuesto comprable", featureStructure: "Sin cambios estructurales", demoBefore: "ambiente original", demoAfter: "visión proyectada", procurementNote: "la propuesta final separa muebles, iluminación, alfombras y decoración en una lista de compra validable." },
     roomSelect: { title: "¿Qué ambiente transformamos?", residential: "Residencial", commercial: "Comercial", next: "Siguiente", customLabel: "Describe tu ambiente:", customPlaceholder: "Ej: clínica pequeña, balcón gourmet, tienda de ropa...", customRoom: "Describir ambiente", autoRoom: "IA reconoce el ambiente", autoRoomHint: "Luna identifica el ambiente por la foto y decora según ese reconocimiento." },
     kidsConfig: { title: "Config Habitación Infantil", age: "Edad", theme: "Tema", themePlaceholder: "Ej: Dinosaurios...", gender: "Género", select: "Seleccione...", boy: "Niño", girl: "Niña", neutral: "Neutro" },
-    styleSelect: { title: "Elige estilo ideal", cost: "Costo", generate: "Generar" },
+    styleSelect: { title: "Elige tienda y estilo", cost: "Costo", generate: "Generar", storeTitle: "1. Tienda del inventario", storeSubtitle: "Elige qué tienda se usará para la decoración y el presupuesto por ítems.", budgetTitle: "2. Budget del proyecto", budgetSubtitle: "La lista de la tienda elegida será calculada según esta franja.", styleTitle: "3. Estilo de decoración", styleSubtitle: "Elige el estilo antes de generar la imagen.", missingStore: "Elige la tienda del inventario", missingStyle: "Elige el estilo de decoración" },
     results: { 
       title: "¡Transformación Lista!", subtitle: "Compara Antes y Después.", 
       download: "Descargar Imagen", 
@@ -778,7 +778,7 @@ export default function App() {
   const [technicalBrief, setTechnicalBrief] = useState<string>('');
   const [wayfairBudget, setWayfairBudget] = useState<WayfairBudgetItem[]>([]);
   const [wayfairBudgetNote, setWayfairBudgetNote] = useState('');
-  const [selectedProviderId, setSelectedProviderId] = useState('wayfair');
+  const [selectedProviderId, setSelectedProviderId] = useState('');
   const [selectedBudgetTierId, setSelectedBudgetTierId] = useState<BudgetTierId>('essential');
   const [savedProjects, setSavedProjects] = useState<any[]>([]);
   const [savingProject, setSavingProject] = useState(false);
@@ -810,8 +810,10 @@ export default function App() {
   };
 
   const canProceedFromRoom = Boolean(selectedRoomId && (selectedRoomId !== 'custom_room' || customRoomType.trim().length >= 3));
-  const selectedProductProvider = getProductProvider(selectedProviderId);
+  const selectedProductProvider = selectedProviderId ? getProductProvider(selectedProviderId) : null;
+  const selectedProviderName = selectedProductProvider?.name || (lang === 'en' ? 'Selected store' : lang === 'es' ? 'Tienda elegida' : 'Loja escolhida');
   const selectedBudgetTier = getBudgetTier(selectedBudgetTierId);
+  const canGenerateDecoration = Boolean(selectedStyleId && selectedProductProvider && selectedProductProvider.status === 'active');
 
   useEffect(() => {
     const savedLang = localStorage.getItem('bhome_lang');
@@ -936,8 +938,18 @@ export default function App() {
   const generateDecoration = async (overrideMaterial?: string, targetStyleId?: string) => {
     if (!selectedImage || !selectedRoomId) return;
     
-    const effectiveStyleId = targetStyleId || selectedStyleId || 'modern';
+    const effectiveStyleId = targetStyleId || selectedStyleId;
     if (targetStyleId) setSelectedStyleId(targetStyleId);
+
+    if (!effectiveStyleId) {
+        alert(lang === 'en' ? 'Choose a decor style before generating.' : lang === 'es' ? 'Elige un estilo de decoración antes de generar.' : 'Escolha um estilo de decoração antes de gerar.');
+        return;
+    }
+
+    if (!selectedProductProvider || selectedProductProvider.status !== 'active') {
+        alert(lang === 'en' ? 'Choose the inventory store before generating.' : lang === 'es' ? 'Elige la tienda del inventario antes de generar.' : 'Escolha a loja do inventário antes de gerar.');
+        return;
+    }
 
     if (selectedRoomId === 'bedroom_kids' && (!childAge || !childTheme)) {
         alert("Informe idade e tema para quarto infantil."); return;
@@ -1091,9 +1103,9 @@ export default function App() {
 		            TASK: Create a Professional Project Briefing for the Carpenter/Contractor.
 		            LANGUAGE: ${lang === 'pt' ? 'Portuguese' : lang === 'es' ? 'Spanish' : 'English'}.
 		            SELECTED CLIENT BUDGET: ${getBudgetRangeLabel(selectedBudgetTier, lang)}.
-		            ${selectedProductProvider.name.toUpperCase()} PROCUREMENT LIST:
+		            ${selectedProviderName.toUpperCase()} PROCUREMENT LIST:
 		            ${wayfairBudget.map(item => `- ${item.quantity}x ${item.name} (${item.category}) - ${toMoney(item.totalPrice)} - ${item.url}`).join('\n')}
-		            Include a short note that movable furniture/decor items were selected from ${selectedProductProvider.name} links/searches and must be checked for final availability before purchase.
+		            Include a short note that movable furniture/decor items were selected from ${selectedProviderName} links/searches and must be checked for final availability before purchase.
 	            FORMAT: Plain text with headers.
 	         `;
          const res = await generateGeminiContent({ model: 'gemini-2.5-flash', contents: prompt });
@@ -1169,14 +1181,14 @@ export default function App() {
 	          doc.setFont("helvetica", "bold");
 	          doc.setFontSize(13);
 	          doc.setTextColor(217, 119, 6);
-	          doc.text(`Orçamento ${selectedProductProvider.name}`, margin, cursorY);
+	          doc.text(`Orçamento ${selectedProviderName}`, margin, cursorY);
 	          cursorY += 8;
 	          doc.setFont("helvetica", "normal");
 		          doc.setFontSize(9);
 		          doc.setTextColor(40, 40, 40);
 		          const budgetLines = doc.splitTextToSize(
 		              `Budget selecionado: ${getBudgetRangeLabel(selectedBudgetTier, lang)}\n` +
-		              `${wayfairBudgetNote || `Itens selecionados em ${selectedProductProvider.name} para validação final de disponibilidade e preço.`}\n\n` +
+		              `${wayfairBudgetNote || `Itens selecionados em ${selectedProviderName} para validação final de disponibilidade e preço.`}\n\n` +
 		              wayfairBudget.map((item, index) =>
 		                  `${index + 1}. ${item.quantity}x ${item.name} | ${item.category} | ${toMoney(item.totalPrice)} | ${item.url}`
 		              ).join('\n'),
@@ -1466,12 +1478,15 @@ export default function App() {
 	                            <span className="bg-white px-3 py-1 rounded text-sm text-[#6f6075]">{t.styleSelect.cost}: {GENERATION_COST}</span>
 	                        </div>
 	                        <div className="bg-white border border-[#eadff2] rounded-2xl p-5">
-	                            <div className="flex items-center gap-2 mb-4">
-	                                <Store className="w-5 h-5 text-[#7F187F]" />
-	                                <div>
-	                                    <h3 className="font-black text-[#2f1a35]">Fornecedor do orçamento</h3>
-	                                    <p className="text-xs text-[#85758a]">Nesta versão, a decoração comprável fica travada no fornecedor ativo.</p>
+	                            <div className="flex items-start justify-between gap-3 mb-4">
+	                                <div className="flex items-center gap-2">
+	                                    <Store className="w-5 h-5 text-[#7F187F]" />
+	                                    <div>
+	                                        <h3 className="font-black text-[#2f1a35]">{t.styleSelect.storeTitle}</h3>
+	                                        <p className="text-xs text-[#85758a]">{t.styleSelect.storeSubtitle}</p>
+	                                    </div>
 	                                </div>
+	                                {!selectedProviderId && <span className="text-xs font-bold text-[#7F187F] bg-[#f3e8ff] px-3 py-1 rounded-full whitespace-nowrap">{t.styleSelect.missingStore}</span>}
 	                            </div>
 	                            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
 	                                {PRODUCT_PROVIDERS.map(provider => (
@@ -1491,8 +1506,8 @@ export default function App() {
 	                            <div className="flex items-center gap-2 mb-4">
 	                                <Coins className="w-5 h-5 text-[#7F187F]" />
 	                                <div>
-	                                    <h3 className="font-black text-[#2f1a35]">Budget do projeto</h3>
-	                                    <p className="text-xs text-[#85758a]">A decoração e a lista da loja escolhida serão calculadas conforme a faixa escolhida.</p>
+	                                    <h3 className="font-black text-[#2f1a35]">{t.styleSelect.budgetTitle}</h3>
+	                                    <p className="text-xs text-[#85758a]">{t.styleSelect.budgetSubtitle}</p>
 	                                </div>
 	                            </div>
 	                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1512,6 +1527,14 @@ export default function App() {
 	                                ))}
 	                            </div>
 	                        </div>
+	                        <div>
+	                            <div className="flex items-center justify-between gap-3 mb-4">
+	                                <div>
+	                                    <h3 className="font-black text-[#2f1a35]">{t.styleSelect.styleTitle}</h3>
+	                                    <p className="text-xs text-[#85758a]">{t.styleSelect.styleSubtitle}</p>
+	                                </div>
+	                                {!selectedStyleId && <span className="text-xs font-bold text-[#7F187F] bg-[#f3e8ff] px-3 py-1 rounded-full">{t.styleSelect.missingStyle}</span>}
+	                            </div>
 	                        {loadingStyles ? (
                             <div className="flex justify-center py-20"><Spinner message={t.loading.seeding || "Loading..."} /></div>
                         ) : (
@@ -1530,7 +1553,20 @@ export default function App() {
                                 ))}
                             </div>
                         )}
-                        <div className="flex justify-end"><button onClick={() => generateDecoration()} disabled={loadingStyles} className="bg-[#7F187F] px-10 py-4 rounded-xl font-bold text-white hover:bg-[#651365] shadow-lg flex items-center disabled:opacity-50"><Wand2 className="mr-2"/> {t.styleSelect.generate}</button></div>
+	                        </div>
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white border border-[#eadff2] rounded-2xl p-4">
+                            <div className="text-sm text-[#4b3650]">
+                                <div className="font-black">
+                                    {selectedProductProvider ? selectedProductProvider.name : t.styleSelect.missingStore}
+                                    {' · '}
+                                    {selectedStyleId ? (STYLE_LABELS[lang][selectedStyleId] || selectedStyleId) : t.styleSelect.missingStyle}
+                                    {' · '}
+                                    {getBudgetRangeLabel(selectedBudgetTier, lang)}
+                                </div>
+                                <div className="text-xs text-[#85758a] mt-1">A imagem e o inventário serão gerados somente depois dessas escolhas.</div>
+                            </div>
+                            <button onClick={() => generateDecoration()} disabled={loadingStyles || !canGenerateDecoration} className="bg-[#7F187F] px-10 py-4 rounded-xl font-bold text-white hover:bg-[#651365] shadow-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"><Wand2 className="mr-2"/> {canGenerateDecoration ? t.styleSelect.generate : (!selectedProviderId ? t.styleSelect.missingStore : t.styleSelect.missingStyle)}</button>
+                        </div>
                     </div>
                 )}
 
@@ -1549,10 +1585,10 @@ export default function App() {
 	                                <div>
 	                                    <div className="flex items-center gap-2 text-[#7F187F] font-black uppercase tracking-wide text-sm">
 	                                        <ShoppingBag className="w-4 h-4" />
-	                                        {selectedProductProvider.name} Shopping List
+	                                        {selectedProviderName} Shopping List
 	                                    </div>
 	                                    <p className="text-[#6f6075] text-sm mt-1">
-	                                        Itens móveis e decoração limitados à {selectedProductProvider.name}, com link direto ou busca validável na loja.
+	                                        Itens móveis e decoração limitados à {selectedProviderName}, com link direto ou busca validável na loja.
 	                                    </p>
 	                                    <div className="mt-3 flex flex-wrap gap-2">
 	                                        <span className="inline-flex items-center gap-1 rounded-full bg-[#f3e8ff] px-3 py-1 text-xs font-black text-[#7F187F]">
@@ -1593,7 +1629,7 @@ export default function App() {
 	                                            <div className="flex flex-wrap items-center gap-2">
 	                                                <span className="text-xs bg-[#f3e8ff] text-[#4b3650] px-2 py-1 rounded font-bold">{item.category}</span>
 	                                                <span className={`text-[10px] px-2 py-1 rounded uppercase font-black ${item.validation === 'direct_product' ? 'bg-[#e9f8ee] text-[#1f7a3f]' : 'bg-[#f3e8ff] text-[#7F187F]'}`}>
-	                                                    {item.validation === 'direct_product' ? `produto ${selectedProductProvider.name}` : `busca ${selectedProductProvider.name}`}
+	                                                    {item.validation === 'direct_product' ? `produto ${selectedProviderName}` : `busca ${selectedProviderName}`}
 	                                                </span>
 	                                            </div>
 	                                            <h3 className="font-bold text-[#2f1a35] mt-2">{item.quantity}x {item.name}</h3>
@@ -1609,7 +1645,7 @@ export default function App() {
 	                                                target="_blank"
 	                                                rel="noopener noreferrer"
 	                                                className="bg-[#f3e8ff] hover:bg-[#eadff2] border border-[#dac7e5] rounded-lg p-3 text-[#7F187F]"
-	                                                title={`Abrir na ${selectedProductProvider.name}`}
+	                                                title={`Abrir na ${selectedProviderName}`}
 	                                            >
 	                                                <ExternalLink className="w-4 h-4" />
 	                                            </a>
