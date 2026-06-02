@@ -226,34 +226,37 @@ const normalizeShoppingItem = (raw: any, provider: ProductProviderConfig): Wayfa
   };
 };
 
+// CSS linear-gradient direto: garante render mesmo se Tailwind CDN JIT falhar
+// em arbitrary values dinamicos. Bug pre-fix: gradientes Tailwind nao apareciam.
 const STYLE_GRADIENTS: Record<string, string> = {
-  modern: 'from-[#2f1a35] via-[#7f187f] to-[#f2d2a9]',
-  industrial: 'from-[#252525] via-[#5d4d43] to-[#c0834b]',
-  scandinavian: 'from-[#f8f5f2] via-[#d8c8b5] to-[#91a3a8]',
-  luxury_italian: 'from-[#28172b] via-[#7f187f] to-[#d4af37]',
-  brazilian_modernism: 'from-[#533d2e] via-[#b98552] to-[#3d7f5c]',
-  japandi: 'from-[#efe6d6] via-[#8f7d6b] to-[#2e3a35]',
-  biophilic: 'from-[#183f2b] via-[#4f9d69] to-[#d8c8b5]',
-  mid_century: 'from-[#4f3626] via-[#a26735] to-[#d5a021]',
-  mediterranean: 'from-[#efe1cc] via-[#c9805a] to-[#477b93]',
-  neoclassical: 'from-[#f4edf5] via-[#d7bfdc] to-[#8e6d3f]',
-  boho: 'from-[#8f5035] via-[#d19068] to-[#f2d7a5]',
-  farmhouse: 'from-[#f7f2eb] via-[#9f8d7b] to-[#222222]',
-  minimalist: 'from-[#fff8ef] via-[#dfcfbd] to-[#a88f74]',
-  art_deco: 'from-[#13251f] via-[#087262] to-[#d4af37]',
-  cyberpunk: 'from-[#111827] via-[#7f187f] to-[#00d4ff]',
-  coastal: 'from-[#f8fbfb] via-[#bddbea] to-[#2f6f91]',
-  maximalist: 'from-[#2f1a35] via-[#c24183] to-[#facc15]',
-  wabi_sabi: 'from-[#d6c3ad] via-[#8a7564] to-[#4d4138]',
-  transitional: 'from-[#f7f0e9] via-[#b79d84] to-[#38516b]',
-  classic: 'from-[#3e2418] via-[#7a4629] to-[#d5b268]',
-  vintage: 'from-[#6b3a1f] via-[#d97706] to-[#667a3a]',
-  rustic: 'from-[#3c2f25] via-[#8a5a36] to-[#d6b58a]',
-  zen: 'from-[#e8dfd1] via-[#81936a] to-[#33443a]',
-  eclectic: 'from-[#3b2251] via-[#dd7f4f] to-[#5aa6a6]',
+  modern:               'linear-gradient(135deg, #2f1a35 0%, #7f187f 50%, #f2d2a9 100%)',
+  industrial:           'linear-gradient(135deg, #252525 0%, #5d4d43 50%, #c0834b 100%)',
+  scandinavian:         'linear-gradient(135deg, #f8f5f2 0%, #d8c8b5 50%, #91a3a8 100%)',
+  luxury_italian:       'linear-gradient(135deg, #28172b 0%, #7f187f 50%, #d4af37 100%)',
+  brazilian_modernism:  'linear-gradient(135deg, #533d2e 0%, #b98552 50%, #3d7f5c 100%)',
+  japandi:              'linear-gradient(135deg, #efe6d6 0%, #8f7d6b 50%, #2e3a35 100%)',
+  biophilic:            'linear-gradient(135deg, #183f2b 0%, #4f9d69 50%, #d8c8b5 100%)',
+  mid_century:          'linear-gradient(135deg, #4f3626 0%, #a26735 50%, #d5a021 100%)',
+  mediterranean:        'linear-gradient(135deg, #efe1cc 0%, #c9805a 50%, #477b93 100%)',
+  neoclassical:         'linear-gradient(135deg, #f4edf5 0%, #d7bfdc 50%, #8e6d3f 100%)',
+  boho:                 'linear-gradient(135deg, #8f5035 0%, #d19068 50%, #f2d7a5 100%)',
+  farmhouse:            'linear-gradient(135deg, #f7f2eb 0%, #9f8d7b 50%, #222222 100%)',
+  minimalist:           'linear-gradient(135deg, #fff8ef 0%, #dfcfbd 50%, #a88f74 100%)',
+  art_deco:             'linear-gradient(135deg, #13251f 0%, #087262 50%, #d4af37 100%)',
+  cyberpunk:            'linear-gradient(135deg, #111827 0%, #7f187f 50%, #00d4ff 100%)',
+  coastal:              'linear-gradient(135deg, #f8fbfb 0%, #bddbea 50%, #2f6f91 100%)',
+  maximalist:           'linear-gradient(135deg, #2f1a35 0%, #c24183 50%, #facc15 100%)',
+  wabi_sabi:            'linear-gradient(135deg, #d6c3ad 0%, #8a7564 50%, #4d4138 100%)',
+  transitional:         'linear-gradient(135deg, #f7f0e9 0%, #b79d84 50%, #38516b 100%)',
+  classic:              'linear-gradient(135deg, #3e2418 0%, #7a4629 50%, #d5b268 100%)',
+  vintage:              'linear-gradient(135deg, #6b3a1f 0%, #d97706 50%, #667a3a 100%)',
+  rustic:               'linear-gradient(135deg, #3c2f25 0%, #8a5a36 50%, #d6b58a 100%)',
+  zen:                  'linear-gradient(135deg, #e8dfd1 0%, #81936a 50%, #33443a 100%)',
+  eclectic:             'linear-gradient(135deg, #3b2251 0%, #dd7f4f 50%, #5aa6a6 100%)',
 };
 
-const styleGradientFor = (id: string) => STYLE_GRADIENTS[id] || 'from-[#2f1a35] via-[#7f187f] to-[#f2d2a9]';
+const styleGradientFor = (id: string) =>
+  STYLE_GRADIENTS[id] || 'linear-gradient(135deg, #2f1a35 0%, #7f187f 50%, #f2d2a9 100%)';
 
 const extractJsonObject = (text: string) => {
   const fenced = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
@@ -361,7 +364,7 @@ const TRANSLATIONS = {
     upload: { title: "Comece com uma foto do ambiente", subtitle: "Envie uma imagem da galeria ou abra a câmera do celular", gallery: "Escolher da galeria", camera: "Abrir câmera", heroEyebrow: "Design com IA + lista de compra", heroTitle: "Decore seu ambiente com peças reais para comprar", heroSubtitle: "A WayDecor transforma uma foto em uma proposta visual, preserva a estrutura do espaço e monta um orçamento item por item com produtos pesquisáveis em lojas como Wayfair e Target.", featureDesign: "Imagem de encantamento", featureBudget: "Orçamento comprável", featureStructure: "Sem mexer na estrutura", demoBefore: "ambiente original", demoAfter: "visão projetada", procurementNote: "a proposta final separa móveis, iluminação, tapetes e decoração em uma lista de compra validável." },
     roomSelect: { title: "Qual ambiente vamos transformar?", residential: "Residencial", commercial: "Comercial & Corporativo", next: "Próximo", customLabel: "Descreva seu ambiente:", customPlaceholder: "Ex: consultório pequeno, varanda gourmet, loja de roupas...", customRoom: "Descrever ambiente", autoRoom: "IA reconhece o ambiente", autoRoomHint: "A Luna identifica o cômodo pela foto e decora conforme o reconhecimento." },
     kidsConfig: { title: "Configuração do Quarto Infantil", age: "Idade", theme: "Tema", themePlaceholder: "Ex: Dinossauros...", gender: "Gênero", select: "Selecione...", boy: "Menino", girl: "Menina", neutral: "Neutro" },
-    styleSelect: { title: "Escolha a loja e o estilo", cost: "Custo", generate: "Gerar Transformação", storeTitle: "1. Loja do inventário", storeSubtitle: "Escolha qual loja será usada para montar a decoração e o orçamento item por item.", budgetTitle: "2. Budget do projeto", budgetSubtitle: "A lista da loja escolhida será calculada conforme a faixa escolhida.", styleTitle: "3. Estilo de decoração", styleSubtitle: "Escolha o estilo antes de gerar a imagem de encantamento.", missingStore: "Escolha a loja do inventário", missingStyle: "Escolha o estilo de decoração" },
+    styleSelect: { title: "Escolha a loja e o estilo", cost: "Custo", generate: "Gerar Transformação", storeTitle: "1. Loja do inventário", storeSubtitle: "Escolha qual loja será usada para montar a decoração e o orçamento item por item.", budgetTitle: "2. Budget do projeto", budgetSubtitle: "A lista da loja escolhida será calculada conforme a faixa escolhida.", styleTitle: "3. Estilo de decoração", styleSubtitle: "Escolha o estilo antes de gerar a imagem de encantamento.", missingStore: "Escolha a loja do inventário", missingStyle: "Escolha o estilo de decoração", styleHintTitle: "3. Direção de estilo (opcional)", styleHintSubtitle: "Se preferir, descreva em poucas palavras o estilo que você imagina. Sem isso, a IA escolhe o melhor estilo pra esse cômodo.", styleHintPlaceholder: "Ex: minimalista quente com tons terracota e madeira clara, ar industrial-chic com toque tropical...", styleHintAiChoice: "Sem direção: a IA vai escolher um estilo apropriado para o ambiente e o orçamento.", styleHintUsing: "Sua direção será aplicada apenas a acabamentos, iluminação e móveis — a arquitetura é preservada.", styleHintAiChoiceShort: "IA escolhe o estilo" },
     results: { 
       title: "Transformação Pronta!", subtitle: "Compare o Antes e Depois.", 
       download: "Baixar Imagem", 
@@ -383,7 +386,7 @@ const TRANSLATIONS = {
     upload: { title: "Start with a room photo", subtitle: "Upload from gallery or open your phone camera", gallery: "Choose from gallery", camera: "Open camera", heroEyebrow: "AI design + shopping list", heroTitle: "Redesign your room with real products to buy", heroSubtitle: "WayDecor turns a photo into a visual proposal, preserves the room structure and builds an item-by-item budget with searchable products from stores like Wayfair and Target.", featureDesign: "Visual transformation", featureBudget: "Buyable budget", featureStructure: "No structural edits", demoBefore: "original room", demoAfter: "projected vision", procurementNote: "the final proposal separates furniture, lighting, rugs and decor into a validated shopping list." },
     roomSelect: { title: "Which room are we transforming?", residential: "Residential", commercial: "Commercial", next: "Next", customLabel: "Describe your room:", customPlaceholder: "Ex: small clinic, gourmet balcony, clothing store...", customRoom: "Describe room", autoRoom: "AI recognizes the room", autoRoomHint: "Luna identifies the room from the photo and decorates based on that recognition." },
     kidsConfig: { title: "Kids Room Config", age: "Age", theme: "Theme", themePlaceholder: "Ex: Dinosaurs...", gender: "Gender", select: "Select...", boy: "Boy", girl: "Girl", neutral: "Neutral" },
-    styleSelect: { title: "Choose store and style", cost: "Cost", generate: "Generate", storeTitle: "1. Inventory store", storeSubtitle: "Choose which store will be used for the decoration and item-by-item budget.", budgetTitle: "2. Project budget", budgetSubtitle: "The selected store list will be calculated according to this budget range.", styleTitle: "3. Decor style", styleSubtitle: "Choose the style before generating the visual transformation.", missingStore: "Choose the inventory store", missingStyle: "Choose the decor style" },
+    styleSelect: { title: "Choose store and style", cost: "Cost", generate: "Generate", storeTitle: "1. Inventory store", storeSubtitle: "Choose which store will be used for the decoration and item-by-item budget.", budgetTitle: "2. Project budget", budgetSubtitle: "The selected store list will be calculated according to this budget range.", styleTitle: "3. Decor style", styleSubtitle: "Choose the style before generating the visual transformation.", missingStore: "Choose the inventory store", missingStyle: "Choose the decor style", styleHintTitle: "3. Style direction (optional)", styleHintSubtitle: "If you like, describe in a few words the style you have in mind. Without it, the AI picks the best style for this room.", styleHintPlaceholder: "Ex: warm minimalist with terracotta and light wood, industrial-chic with a tropical touch...", styleHintAiChoice: "No direction: the AI will pick a style that suits the room and budget.", styleHintUsing: "Your direction will only drive finishes, lighting and furniture — the architecture is preserved.", styleHintAiChoiceShort: "AI picks the style" },
     results: { 
       title: "Transformation Ready!", subtitle: "Compare Before and After.", 
       download: "Download Image", 
@@ -405,7 +408,7 @@ const TRANSLATIONS = {
     upload: { title: "Empieza con una foto del ambiente", subtitle: "Sube desde la galería o abre la cámara del celular", gallery: "Elegir de galería", camera: "Abrir cámara", heroEyebrow: "Diseño con IA + lista de compra", heroTitle: "Rediseña tu ambiente con productos reales para comprar", heroSubtitle: "WayDecor transforma una foto en una propuesta visual, preserva la estructura y crea un presupuesto por ítems con productos buscables en tiendas como Wayfair y Target.", featureDesign: "Imagen de impacto", featureBudget: "Presupuesto comprable", featureStructure: "Sin cambios estructurales", demoBefore: "ambiente original", demoAfter: "visión proyectada", procurementNote: "la propuesta final separa muebles, iluminación, alfombras y decoración en una lista de compra validable." },
     roomSelect: { title: "¿Qué ambiente transformamos?", residential: "Residencial", commercial: "Comercial", next: "Siguiente", customLabel: "Describe tu ambiente:", customPlaceholder: "Ej: clínica pequeña, balcón gourmet, tienda de ropa...", customRoom: "Describir ambiente", autoRoom: "IA reconoce el ambiente", autoRoomHint: "Luna identifica el ambiente por la foto y decora según ese reconocimiento." },
     kidsConfig: { title: "Config Habitación Infantil", age: "Edad", theme: "Tema", themePlaceholder: "Ej: Dinosaurios...", gender: "Género", select: "Seleccione...", boy: "Niño", girl: "Niña", neutral: "Neutro" },
-    styleSelect: { title: "Elige tienda y estilo", cost: "Costo", generate: "Generar", storeTitle: "1. Tienda del inventario", storeSubtitle: "Elige qué tienda se usará para la decoración y el presupuesto por ítems.", budgetTitle: "2. Budget del proyecto", budgetSubtitle: "La lista de la tienda elegida será calculada según esta franja.", styleTitle: "3. Estilo de decoración", styleSubtitle: "Elige el estilo antes de generar la imagen.", missingStore: "Elige la tienda del inventario", missingStyle: "Elige el estilo de decoración" },
+    styleSelect: { title: "Elige tienda y estilo", cost: "Costo", generate: "Generar", storeTitle: "1. Tienda del inventario", storeSubtitle: "Elige qué tienda se usará para la decoración y el presupuesto por ítems.", budgetTitle: "2. Budget del proyecto", budgetSubtitle: "La lista de la tienda elegida será calculada según esta franja.", styleTitle: "3. Estilo de decoración", styleSubtitle: "Elige el estilo antes de generar la imagen.", missingStore: "Elige la tienda del inventario", missingStyle: "Elige el estilo de decoración", styleHintTitle: "3. Dirección de estilo (opcional)", styleHintSubtitle: "Si quieres, describe en pocas palabras el estilo que imaginas. Sin esto, la IA elige el mejor estilo para este ambiente.", styleHintPlaceholder: "Ej: minimalista cálido con tonos terracota y madera clara, industrial-chic con toque tropical...", styleHintAiChoice: "Sin dirección: la IA elegirá un estilo adecuado al ambiente y al presupuesto.", styleHintUsing: "Tu dirección se aplicará solo a acabados, iluminación y muebles — la arquitectura se preserva.", styleHintAiChoiceShort: "La IA elige el estilo" },
     results: { 
       title: "¡Transformación Lista!", subtitle: "Compara Antes y Después.", 
       download: "Descargar Imagen", 
@@ -760,6 +763,7 @@ export default function App() {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [customRoomType, setCustomRoomType] = useState('');
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
+  const [customStyleHint, setCustomStyleHint] = useState<string>('');
   
   const [childAge, setChildAge] = useState('');
   const [childTheme, setChildTheme] = useState('');
@@ -813,7 +817,8 @@ export default function App() {
   const selectedProductProvider = selectedProviderId ? getProductProvider(selectedProviderId) : null;
   const selectedProviderName = selectedProductProvider?.name || (lang === 'en' ? 'Selected store' : lang === 'es' ? 'Tienda elegida' : 'Loja escolhida');
   const selectedBudgetTier = getBudgetTier(selectedBudgetTierId);
-  const canGenerateDecoration = Boolean(selectedStyleId && selectedProductProvider && selectedProductProvider.status === 'active');
+  // Estilo agora e opcional: usuario pode escrever uma direcao livre OU deixar a IA escolher.
+  const canGenerateDecoration = Boolean(selectedProductProvider && selectedProductProvider.status === 'active');
 
   useEffect(() => {
     const savedLang = localStorage.getItem('bhome_lang');
@@ -938,13 +943,9 @@ export default function App() {
   const generateDecoration = async (overrideMaterial?: string, targetStyleId?: string) => {
     if (!selectedImage || !selectedRoomId) return;
     
+    // Estilo agora e opcional. effectiveStyleId pode ser null se usuario nao escolheu.
     const effectiveStyleId = targetStyleId || selectedStyleId;
     if (targetStyleId) setSelectedStyleId(targetStyleId);
-
-    if (!effectiveStyleId) {
-        alert(lang === 'en' ? 'Choose a decor style before generating.' : lang === 'es' ? 'Elige un estilo de decoración antes de generar.' : 'Escolha um estilo de decoração antes de gerar.');
-        return;
-    }
 
     if (!selectedProductProvider || selectedProductProvider.status !== 'active') {
         alert(lang === 'en' ? 'Choose the inventory store before generating.' : lang === 'es' ? 'Elige la tienda del inventario antes de generar.' : 'Escolha a loja do inventário antes de gerar.');
@@ -972,20 +973,28 @@ export default function App() {
     setIsGenerating(true);
     
     try {
-      const style = decorStyles.find(s => s.id === effectiveStyleId);
+      const style = effectiveStyleId ? decorStyles.find(s => s.id === effectiveStyleId) : null;
       const requestId = new Date().getTime();
       const roomLabel = getSelectedRoomLabel('en');
       const roomInstruction = getRoomPromptInstruction();
       const budgetInstruction = selectedBudgetTier.prompt;
+      const userStyleHint = customStyleHint.trim();
+
+      // Direcao de estilo: hint do usuario > preset (legacy) > IA escolhe.
+      const styleDirectionLine = userStyleHint
+        ? `Target Style: User direction (free text) — "${userStyleHint}". Interpret this faithfully but only via surface finishes, lighting and movable items.`
+        : effectiveStyleId && STYLE_LABELS['en'][effectiveStyleId]
+          ? `Target Style: ${STYLE_LABELS['en'][effectiveStyleId]} (${style?.prompt_modifier || 'High-end design'})`
+          : `Target Style: Designer's choice. Pick a tasteful, high-end style that suits the room type, the existing architecture and the selected budget. Lean contemporary unless the room screams otherwise.`;
 
       setLoadingMessage(t.loading.design);
-      
+
       // USE DYNAMIC SYSTEM MEMORY HERE
       const creativePrompt = `
         ${systemMemory.ARCHITECT_PROTOCOL}
-        
+
         Act as a Senior Interior Architect.
-        Target Style: ${STYLE_LABELS['en'][effectiveStyleId]} (${style?.prompt_modifier || 'High-end design'})
+        ${styleDirectionLine}
         ${roomInstruction}
         BUDGET TIER: ${getBudgetRangeLabel(selectedBudgetTier, 'en')}
         BUDGET DISCIPLINE: ${budgetInstruction}
@@ -1001,8 +1010,17 @@ export default function App() {
 		        6. Do not depend on custom-only or unbuyable pieces unless they are non-structural finishes already present in the room.
 		        7. Respect the selected budget tier. Match the visual ambition to the budget and avoid designing around items that would clearly exceed the selected range.
 		        8. The output description must explicitly instruct the renderer to edit the existing photo, not create a new room.
-	        
+
 	        Output only the raw prompt text.
+
+	        OUTPUT CONSTRAINT (NON-NEGOTIABLE — applies to the very text you produce):
+	        - Your output will be fed verbatim into an image-edit renderer. Anything you describe will be attempted by the renderer.
+	        - Therefore your output MUST NOT mention, suggest, imply or hint at any change to the room's geometry, structure, footprint, layout or perspective.
+	        - Forbidden topics in your output: opening, closing, widening, narrowing, raising, lowering, knocking down, removing, adding, moving, repositioning, extending or merging any wall, window, door, opening, ceiling, floor, column, stair, beam, balcony, loft or fireplace; changing room dimensions, proportions, footprint, camera angle, lens, perspective or crop.
+	        - Forbidden phrasing: "open up", "knock down", "remove the wall", "add a window", "expand", "extend", "integrate with", "raise the ceiling", "lower the ceiling", "convert the layout", "reframe", "rearrange the walls".
+	        - If the target style traditionally implies architectural changes, translate them into SURFACE FINISHES ONLY (e.g., "Industrial loft" → concrete-effect paint, metal-framed art, exposed-style decor — NEVER actual exposed beams or removed walls).
+	        - Allowed scope: paint colors, wallpaper, removable wall paneling/cladding, ceiling paint/finish, floor finish (rugs, decorative panels — not structural floor changes), lighting fixtures and effects, furniture, rugs, curtains, art, mirrors, lamps, plants and decor.
+	        - Begin the output with the phrase: "Within the existing room shell, with all walls, windows, doors, ceiling and floor in their exact current positions, ..."
 	      `;
 
       const creativeRes = await generateGeminiContent({
@@ -1026,9 +1044,14 @@ export default function App() {
 		        DO NOT: change the room's size, shape, layout, proportions, perspective or camera; do not move/add/remove walls, windows, doors, openings or change ceiling/floor geometry.
 		        DO (within the fixed geometry): freely restyle — repaint, wallpaper, wall paneling/cladding, flooring finish, ceiling finish, lighting (add/upgrade fixtures, track, recessed, LED, ambiance) — and add/replace furniture, rugs, curtains, tables, lamps, art, mirrors, plants and decor. The look can change a lot; the room's geometry cannot.
 	        
-	        NEW DESIGN INSTRUCTION:
+	        NEW DESIGN INSTRUCTION (apply ONLY to surfaces, lighting and movable items — never to geometry):
         ${enhancedDescription}
         ${overrideMaterial ? `MATERIAL OVERRIDE: Apply ${overrideMaterial} to all new furniture.` : ''}
+
+        FINAL OVERRIDE (defense-in-depth — beats anything above):
+        - If ANY part of the design instruction above suggests moving, adding, removing, resizing or reshaping a wall, window, door, opening, ceiling, floor, column, stair, beam, balcony, loft, fireplace, or changing room dimensions/proportions/perspective/camera, IGNORE THAT PART.
+        - Treat the input image as a locked architectural shell. Restyle it; do not redesign it.
+        - The output image MUST be a photo-edit of the SAME room from the SAME viewpoint — not a new generation.
 
         Request ID: ${requestId}
       `;
@@ -1066,7 +1089,7 @@ export default function App() {
 	          setWayfairBudget([]);
 	          const shoppingResult = await generateShoppingBudget({
 	              roomLabel,
-	              styleLabel: STYLE_LABELS['en'][effectiveStyleId],
+	              styleLabel: userStyleHint || (effectiveStyleId && STYLE_LABELS['en'][effectiveStyleId]) || "Designer's choice",
 	              designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
 	              language: lang,
 	              budgetTier: selectedBudgetTier,
@@ -1245,7 +1268,7 @@ export default function App() {
 	              body: JSON.stringify({
 		                  providerId: selectedProviderId,
 		                  room: getSelectedRoomLabel(lang),
-		                  style: STYLE_LABELS[lang][selectedStyleId] || selectedStyleId,
+		                  style: customStyleHint.trim() || (selectedStyleId ? (STYLE_LABELS[lang][selectedStyleId] || selectedStyleId) : "Designer's choice"),
 		                  budgetTier: selectedBudgetTierId,
 		                  budgetRange: getBudgetRangeLabel(selectedBudgetTier, lang),
 		                  budgetItems: wayfairBudget,
@@ -1527,45 +1550,38 @@ export default function App() {
 	                                ))}
 	                            </div>
 	                        </div>
-	                        <div>
-	                            <div className="flex items-center justify-between gap-3 mb-4">
+	                        <div className="bg-white border border-[#eadff2] rounded-2xl p-5">
+	                            <div className="flex items-start gap-3 mb-3">
+	                                <Wand2 className="w-5 h-5 text-[#7F187F] shrink-0 mt-0.5" />
 	                                <div>
-	                                    <h3 className="font-black text-[#2f1a35]">{t.styleSelect.styleTitle}</h3>
-	                                    <p className="text-xs text-[#85758a]">{t.styleSelect.styleSubtitle}</p>
+	                                    <h3 className="font-black text-[#2f1a35]">{t.styleSelect.styleHintTitle}</h3>
+	                                    <p className="text-xs text-[#85758a]">{t.styleSelect.styleHintSubtitle}</p>
 	                                </div>
-	                                {!selectedStyleId && <span className="text-xs font-bold text-[#7F187F] bg-[#f3e8ff] px-3 py-1 rounded-full">{t.styleSelect.missingStyle}</span>}
 	                            </div>
-	                        {loadingStyles ? (
-                            <div className="flex justify-center py-20"><Spinner message={t.loading.seeding || "Loading..."} /></div>
-                        ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {decorStyles.map(s => (
-                                    <Tooltip key={s.id} text={s.prompt_modifier}>
-                                        <button onClick={() => setSelectedStyleId(s.id)} className={`relative aspect-video rounded-xl overflow-hidden border bg-[#f3e8ff] ${selectedStyleId===s.id ? 'ring-2 ring-[#7F187F]' : 'border-[#eadff2] hover:scale-105'} transition-all`}>
-                                            <div className={`absolute inset-0 bg-gradient-to-br ${styleGradientFor(s.id)} opacity-85`}></div>
-                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.45),transparent_28%),radial-gradient(circle_at_74%_72%,rgba(255,255,255,0.24),transparent_32%)]"></div>
-                                            <div className="absolute left-4 top-4 h-10 w-16 rounded-md border border-white/50 bg-white/25"></div>
-                                            <div className="absolute right-4 bottom-9 h-7 w-20 rounded-full bg-white/20"></div>
-                                            <div className="absolute bottom-0 left-0 w-full p-2 bg-black/60 font-bold text-sm text-white z-10">{STYLE_LABELS[lang][s.id] || s.id}</div>
-                                            {selectedStyleId === s.id && <div className="absolute top-2 right-2 bg-[#7F187F] text-white rounded-full p-1 z-10"><CheckCircle2 size={16}/></div>}
-                                        </button>
-                                    </Tooltip>
-                                ))}
-                            </div>
-                        )}
+	                            <textarea
+	                                value={customStyleHint}
+	                                onChange={(e) => setCustomStyleHint(e.target.value)}
+	                                placeholder={t.styleSelect.styleHintPlaceholder}
+	                                rows={2}
+	                                maxLength={280}
+	                                className="w-full bg-[#f7f3fb] border border-[#dac7e5] rounded-lg p-3 text-sm text-[#2f1a35] placeholder:text-[#a596ad] focus:outline-none focus:border-[#7F187F] focus:ring-2 focus:ring-[#7F187F]/20 resize-none"
+	                            />
+	                            <p className="text-[11px] text-[#85758a] mt-2 italic">
+	                                {customStyleHint.trim() ? t.styleSelect.styleHintUsing : t.styleSelect.styleHintAiChoice}
+	                            </p>
 	                        </div>
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white border border-[#eadff2] rounded-2xl p-4">
                             <div className="text-sm text-[#4b3650]">
                                 <div className="font-black">
                                     {selectedProductProvider ? selectedProductProvider.name : t.styleSelect.missingStore}
                                     {' · '}
-                                    {selectedStyleId ? (STYLE_LABELS[lang][selectedStyleId] || selectedStyleId) : t.styleSelect.missingStyle}
+                                    {customStyleHint.trim() ? customStyleHint.trim().slice(0, 60) + (customStyleHint.trim().length > 60 ? '…' : '') : t.styleSelect.styleHintAiChoiceShort}
                                     {' · '}
                                     {getBudgetRangeLabel(selectedBudgetTier, lang)}
                                 </div>
                                 <div className="text-xs text-[#85758a] mt-1">A imagem e o inventário serão gerados somente depois dessas escolhas.</div>
                             </div>
-                            <button onClick={() => generateDecoration()} disabled={loadingStyles || !canGenerateDecoration} className="bg-[#7F187F] px-10 py-4 rounded-xl font-bold text-white hover:bg-[#651365] shadow-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"><Wand2 className="mr-2"/> {canGenerateDecoration ? t.styleSelect.generate : (!selectedProviderId ? t.styleSelect.missingStore : t.styleSelect.missingStyle)}</button>
+                            <button onClick={() => generateDecoration()} disabled={loadingStyles || !canGenerateDecoration} className="bg-[#7F187F] px-10 py-4 rounded-xl font-bold text-white hover:bg-[#651365] shadow-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"><Wand2 className="mr-2"/> {canGenerateDecoration ? t.styleSelect.generate : t.styleSelect.missingStore}</button>
                         </div>
                     </div>
                 )}
