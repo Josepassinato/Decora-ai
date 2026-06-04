@@ -163,6 +163,7 @@ const PRODUCT_PROVIDERS = [
   { id: 'ikea', name: 'IKEA', status: 'planned', baseUrl: 'https://www.ikea.com', searchUrl: 'https://www.ikea.com/us/en/search/?q=', note: 'Moveis modulares e economicos.' },
   { id: 'west-elm', name: 'West Elm', status: 'planned', baseUrl: 'https://www.westelm.com', searchUrl: 'https://www.westelm.com/search/results.html?words=', note: 'Decoracao premium.' },
   { id: 'tokstok', name: 'Tok&Stok', status: 'active', baseUrl: 'https://www.tokstok.com.br', searchUrl: 'https://www.tokstok.com.br/s?q=', note: 'Loja BR: moveis e decoracao para projetos no Brasil (precos em BRL).' },
+  { id: 'koizadikaza', name: 'Koiza di Kaza', status: 'active', baseUrl: 'https://koizadikaza.com.br', searchUrl: 'https://koizadikaza.com.br/busca?q=', note: 'Loja BR de decoracao e objetos (precos em BRL).' },
   { id: 'manual-catalog', name: 'Catalogo manual', status: 'planned', baseUrl: '', searchUrl: '', note: 'Lojas sem catalogo publico, como HomeSense.' },
 ];
 
@@ -184,6 +185,7 @@ const isProductProviderUrl = (url: string, provider: ProductProviderConfig) => {
     if (provider.id === 'ikea') return host === 'ikea.com' || host.endsWith('.ikea.com');
     if (provider.id === 'west-elm') return host === 'westelm.com' || host.endsWith('.westelm.com');
     if (provider.id === 'tokstok') return host === 'tokstok.com.br' || host.endsWith('.tokstok.com.br');
+    if (provider.id === 'koizadikaza') return host === 'koizadikaza.com.br' || host.endsWith('.koizadikaza.com.br');
     return false;
   } catch {
     return false;
@@ -200,6 +202,7 @@ const isDirectProductUrl = (url: string, provider: ProductProviderConfig) => {
     if (provider.id === 'ikea') return !parsed.pathname.includes('/search/');
     if (provider.id === 'west-elm') return !parsed.pathname.includes('/search/');
     if (provider.id === 'tokstok') return parsed.pathname.endsWith('/p');
+    if (provider.id === 'koizadikaza') return !parsed.pathname.includes('/busca');
     return true;
   } catch {
     return false;

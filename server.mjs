@@ -32,7 +32,7 @@ const DEFAULT_CLIENT_ID = 'default';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
 const SERPAPI_KEY = process.env.SERPAPI_KEY || '';
 // Domínios por loja — pra priorizar resultados da loja escolhida no Google Shopping.
-const PROVIDER_DOMAINS = { wayfair: 'wayfair.com', target: 'target.com', 'home-depot': 'homedepot.com', ikea: 'ikea.com', 'west-elm': 'westelm.com', tokstok: 'tokstok.com.br' };
+const PROVIDER_DOMAINS = { wayfair: 'wayfair.com', target: 'target.com', 'home-depot': 'homedepot.com', ikea: 'ikea.com', 'west-elm': 'westelm.com', tokstok: 'tokstok.com.br', koizadikaza: 'koizadikaza.com.br' };
 
 let mongoClient = null;
 let mongoDb = null;
@@ -87,6 +87,14 @@ const PROVIDERS = [
     validation: 'direct-link-or-search',
     searchUrl: 'https://www.tokstok.com.br/s?q=',
     note: 'Loja brasileira (BR): moveis e decoracao para projetos no Brasil. Precos em BRL.',
+  },
+  {
+    id: 'koizadikaza',
+    name: 'Koiza di Kaza',
+    status: 'active',
+    validation: 'direct-link-or-search',
+    searchUrl: 'https://koizadikaza.com.br/busca?q=',
+    note: 'Loja brasileira (BR) de decoracao e objetos. Precos em BRL.',
   },
   {
     id: 'manual-catalog',
@@ -286,6 +294,7 @@ const isProviderUrl = (url, providerId) => {
     if (providerId === 'ikea') return host === 'ikea.com' || host.endsWith('.ikea.com');
     if (providerId === 'west-elm') return host === 'westelm.com' || host.endsWith('.westelm.com');
     if (providerId === 'tokstok') return host === 'tokstok.com.br' || host.endsWith('.tokstok.com.br');
+    if (providerId === 'koizadikaza') return host === 'koizadikaza.com.br' || host.endsWith('.koizadikaza.com.br');
     return false;
   } catch {
     return false;
@@ -302,6 +311,7 @@ const isDirectProductUrl = (url, providerId) => {
     if (providerId === 'ikea') return !parsed.pathname.includes('/search/');
     if (providerId === 'west-elm') return !parsed.pathname.includes('/search/');
     if (providerId === 'tokstok') return parsed.pathname.endsWith('/p');
+    if (providerId === 'koizadikaza') return !parsed.pathname.includes('/busca');
     return true;
   } catch {
     return false;
