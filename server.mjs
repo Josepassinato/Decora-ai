@@ -32,7 +32,7 @@ const DEFAULT_CLIENT_ID = 'default';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
 const SERPAPI_KEY = process.env.SERPAPI_KEY || '';
 // Domínios por loja — pra priorizar resultados da loja escolhida no Google Shopping.
-const PROVIDER_DOMAINS = { wayfair: 'wayfair.com', target: 'target.com', 'home-depot': 'homedepot.com', ikea: 'ikea.com', 'west-elm': 'westelm.com' };
+const PROVIDER_DOMAINS = { wayfair: 'wayfair.com', target: 'target.com', 'home-depot': 'homedepot.com', ikea: 'ikea.com', 'west-elm': 'westelm.com', tokstok: 'tokstok.com.br' };
 
 let mongoClient = null;
 let mongoDb = null;
@@ -79,6 +79,14 @@ const PROVIDERS = [
     validation: 'search',
     searchUrl: 'https://www.westelm.com/search/results.html?words=',
     note: 'Bom para decoracao premium e ambientes mais autorais.',
+  },
+  {
+    id: 'tokstok',
+    name: 'Tok&Stok',
+    status: 'active',
+    validation: 'direct-link-or-search',
+    searchUrl: 'https://www.tokstok.com.br/s?q=',
+    note: 'Loja brasileira (BR): moveis e decoracao para projetos no Brasil. Precos em BRL.',
   },
   {
     id: 'manual-catalog',
@@ -277,6 +285,7 @@ const isProviderUrl = (url, providerId) => {
     if (providerId === 'home-depot') return host === 'homedepot.com' || host.endsWith('.homedepot.com');
     if (providerId === 'ikea') return host === 'ikea.com' || host.endsWith('.ikea.com');
     if (providerId === 'west-elm') return host === 'westelm.com' || host.endsWith('.westelm.com');
+    if (providerId === 'tokstok') return host === 'tokstok.com.br' || host.endsWith('.tokstok.com.br');
     return false;
   } catch {
     return false;
@@ -292,6 +301,7 @@ const isDirectProductUrl = (url, providerId) => {
     if (providerId === 'home-depot') return !parsed.pathname.startsWith('/s/');
     if (providerId === 'ikea') return !parsed.pathname.includes('/search/');
     if (providerId === 'west-elm') return !parsed.pathname.includes('/search/');
+    if (providerId === 'tokstok') return parsed.pathname.endsWith('/p');
     return true;
   } catch {
     return false;
@@ -320,11 +330,12 @@ const serpShopping = async ({ query, providerId = 'wayfair', limit = 4, withImag
   if (!q) return [];
   const provider = PROVIDERS.find((p) => p.id === providerId);
   const domain = PROVIDER_DOMAINS[providerId];
+  const isBR = Boolean(domain && domain.endsWith('.com.br'));
   const u = new URL('https://serpapi.com/search.json');
   u.searchParams.set('engine', 'google_shopping');
   u.searchParams.set('q', domain ? `${q} ${provider?.name || ''}`.trim() : q);
-  u.searchParams.set('gl', 'us');
-  u.searchParams.set('hl', 'en');
+  u.searchParams.set('gl', isBR ? 'br' : 'us');
+  u.searchParams.set('hl', isBR ? 'pt-br' : 'en');
   u.searchParams.set('num', String(Math.min(40, Math.max(8, limit * 5))));
   u.searchParams.set('api_key', SERPAPI_KEY);
   const r = await fetch(u, { signal: AbortSignal.timeout(20000) });
@@ -339,7 +350,7 @@ const serpShopping = async ({ query, providerId = 'wayfair', limit = 4, withImag
     const item = {
       name: x.title || q,
       price: Number(x.extracted_price || 0),
-      currency: 'USD',
+      currency: isBR ? 'BRL' : 'USD',
       source: x.source || '',
       inStore: inStore(x),
       link: x.product_link || x.link || (provider ? buildSearchUrl(provider, q) : ''),

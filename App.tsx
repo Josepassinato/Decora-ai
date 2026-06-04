@@ -162,6 +162,7 @@ const PRODUCT_PROVIDERS = [
   { id: 'home-depot', name: 'Home Depot', status: 'planned', baseUrl: 'https://www.homedepot.com', searchUrl: 'https://www.homedepot.com/s/', note: 'Materiais e acabamentos de obra.' },
   { id: 'ikea', name: 'IKEA', status: 'planned', baseUrl: 'https://www.ikea.com', searchUrl: 'https://www.ikea.com/us/en/search/?q=', note: 'Moveis modulares e economicos.' },
   { id: 'west-elm', name: 'West Elm', status: 'planned', baseUrl: 'https://www.westelm.com', searchUrl: 'https://www.westelm.com/search/results.html?words=', note: 'Decoracao premium.' },
+  { id: 'tokstok', name: 'Tok&Stok', status: 'active', baseUrl: 'https://www.tokstok.com.br', searchUrl: 'https://www.tokstok.com.br/s?q=', note: 'Loja BR: moveis e decoracao para projetos no Brasil (precos em BRL).' },
   { id: 'manual-catalog', name: 'Catalogo manual', status: 'planned', baseUrl: '', searchUrl: '', note: 'Lojas sem catalogo publico, como HomeSense.' },
 ];
 
@@ -182,6 +183,7 @@ const isProductProviderUrl = (url: string, provider: ProductProviderConfig) => {
     if (provider.id === 'home-depot') return host === 'homedepot.com' || host.endsWith('.homedepot.com');
     if (provider.id === 'ikea') return host === 'ikea.com' || host.endsWith('.ikea.com');
     if (provider.id === 'west-elm') return host === 'westelm.com' || host.endsWith('.westelm.com');
+    if (provider.id === 'tokstok') return host === 'tokstok.com.br' || host.endsWith('.tokstok.com.br');
     return false;
   } catch {
     return false;
@@ -197,6 +199,7 @@ const isDirectProductUrl = (url: string, provider: ProductProviderConfig) => {
     if (provider.id === 'home-depot') return !parsed.pathname.startsWith('/s/');
     if (provider.id === 'ikea') return !parsed.pathname.includes('/search/');
     if (provider.id === 'west-elm') return !parsed.pathname.includes('/search/');
+    if (provider.id === 'tokstok') return parsed.pathname.endsWith('/p');
     return true;
   } catch {
     return false;
