@@ -16,6 +16,21 @@ AI: Gemini 2.5 Flash (texto) + Gemini 2.5 Flash Image (renderer)
 
 ## Sessões
 
+### 2026-06-04 — Lojas BR + conector nativo de catálogo
+**Commits:** `0aea9b2` (Tok&Stok) · `3169658` (Koiza di Kaza) · `6e53703` (conector nativo)
+
+- **Tok&Stok** e **Koiza di Kaza** cadastradas (ativas). SerpApi com locale BR (gl=br, BRL) p/ lojas `.com.br`.
+- **Conector nativo** (`store-catalog.mjs`) p/ lojas que o Google Shopping não indexa:
+  - crawl do sitemap → páginas de produto → extrai nome/preço/imagem/url/categoria → Mongo `store_products`.
+  - busca local por relevância de tokens (acento-insensível).
+  - extractor `koizadikaza` (produto = `/categoria/slug/`, preço `.price-container .price`, img `/arquivos/produtos/...webp`).
+  - **643 produtos** ingeridos. `/api/catalog/search` usa nativo PRIMEIRO, SerpApi fallback.
+- Endpoints novos: `POST /api/catalog/sync {providerId}` (recrawl) e `source` no `/api/catalog/search`.
+- Cron `/etc/cron.d/decora-catalog-sync` — refresh diário 05:10 (log em `/var/log/decora-catalog-sync.log`).
+- **Testado (prod):** busca nativa `source:native` → produtos reais Koiza c/ preço BRL + link. Tok&Stok via SerpApi BR OK.
+
+**Pendente:** validar render pro com fotos reais · merge `feat/pro-mode`→main · UX escolher entre similares · novos extractors p/ outras lojas pequenas.
+
 ### 2026-06-04 — Modo Profissional (peça por peça) + produtos reais SerpApi
 **Commits:** `a2727f2` (modo pro) · `8e78dab` (SerpApi) · branch `feat/pro-mode`
 
