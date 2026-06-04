@@ -92,6 +92,7 @@ type WayfairBudgetItem = {
   url: string;
   validation: 'direct_product' | 'search_result';
   note?: string;
+  imageUrl?: string; // thumbnail real do produto (SerpApi) — modo Profissional
 };
 
 type BudgetTierId = 'essential' | 'balanced' | 'premium';
@@ -161,6 +162,8 @@ const PRODUCT_PROVIDERS = [
   { id: 'home-depot', name: 'Home Depot', status: 'planned', baseUrl: 'https://www.homedepot.com', searchUrl: 'https://www.homedepot.com/s/', note: 'Materiais e acabamentos de obra.' },
   { id: 'ikea', name: 'IKEA', status: 'planned', baseUrl: 'https://www.ikea.com', searchUrl: 'https://www.ikea.com/us/en/search/?q=', note: 'Moveis modulares e economicos.' },
   { id: 'west-elm', name: 'West Elm', status: 'planned', baseUrl: 'https://www.westelm.com', searchUrl: 'https://www.westelm.com/search/results.html?words=', note: 'Decoracao premium.' },
+  { id: 'tokstok', name: 'Tok&Stok', status: 'active', baseUrl: 'https://www.tokstok.com.br', searchUrl: 'https://www.tokstok.com.br/s?q=', note: 'Loja BR: moveis e decoracao para projetos no Brasil (precos em BRL).' },
+  { id: 'koizadikaza', name: 'Koiza di Kaza', status: 'active', baseUrl: 'https://koizadikaza.com.br', searchUrl: 'https://koizadikaza.com.br/busca?q=', note: 'Loja BR de decoracao e objetos (precos em BRL).' },
   { id: 'manual-catalog', name: 'Catalogo manual', status: 'planned', baseUrl: '', searchUrl: '', note: 'Lojas sem catalogo publico, como HomeSense.' },
 ];
 
@@ -181,6 +184,8 @@ const isProductProviderUrl = (url: string, provider: ProductProviderConfig) => {
     if (provider.id === 'home-depot') return host === 'homedepot.com' || host.endsWith('.homedepot.com');
     if (provider.id === 'ikea') return host === 'ikea.com' || host.endsWith('.ikea.com');
     if (provider.id === 'west-elm') return host === 'westelm.com' || host.endsWith('.westelm.com');
+    if (provider.id === 'tokstok') return host === 'tokstok.com.br' || host.endsWith('.tokstok.com.br');
+    if (provider.id === 'koizadikaza') return host === 'koizadikaza.com.br' || host.endsWith('.koizadikaza.com.br');
     return false;
   } catch {
     return false;
@@ -196,6 +201,8 @@ const isDirectProductUrl = (url: string, provider: ProductProviderConfig) => {
     if (provider.id === 'home-depot') return !parsed.pathname.startsWith('/s/');
     if (provider.id === 'ikea') return !parsed.pathname.includes('/search/');
     if (provider.id === 'west-elm') return !parsed.pathname.includes('/search/');
+    if (provider.id === 'tokstok') return parsed.pathname.endsWith('/p');
+    if (provider.id === 'koizadikaza') return !parsed.pathname.includes('/busca');
     return true;
   } catch {
     return false;
@@ -355,6 +362,26 @@ Return ONLY valid JSON:
     items,
     note: String(parsed.note || `${params.provider.name} shopping list generated with product links/search links for final validation.`),
   };
+};
+
+// Modo Profissional: busca produtos REAIS (SerpApi/Google Shopping) — 1 por peça descrita.
+// Retorna o melhor match por linha (prioriza a loja escolhida; senão, similar).
+type RealProduct = { query: string; name: string; price: number; source: string; inStore: boolean; link: string; thumbnail: string; image: string };
+const fetchRealProducts = async (lines: string[], providerId: string): Promise<RealProduct[]> => {
+  const picks = await Promise.all(lines.map(async (line) => {
+    try {
+      const r = await fetch('/api/catalog/search', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemName: line, providerId, limit: 3, withImage: false }),
+      });
+      if (!r.ok) return null;
+      const d = await r.json();
+      const items = Array.isArray(d.items) ? d.items : [];
+      const best = items.find((i: any) => i.inStore) || items[0];
+      return best ? { query: line, name: best.name, price: Number(best.price || 0), source: best.source || '', inStore: !!best.inStore, link: best.link || '', thumbnail: best.thumbnail || '', image: best.image || '' } : null;
+    } catch { return null; }
+  }));
+  return picks.filter(Boolean) as RealProduct[];
 };
 
 const TRANSLATIONS = {
@@ -764,6 +791,10 @@ export default function App() {
   const [customRoomType, setCustomRoomType] = useState('');
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
   const [customStyleHint, setCustomStyleHint] = useState<string>('');
+  // Fluxo alternativo PRO (decorador/arquiteto): item a item via prompt livre.
+  // 'standard' = fluxo atual (ambiente/estilo). null = tela inicial de escolha.
+  const [appMode, setAppMode] = useState<'standard' | 'pro' | null>(null);
+  const [proPrompt, setProPrompt] = useState<string>('');
   
   const [childAge, setChildAge] = useState('');
   const [childTheme, setChildTheme] = useState('');
@@ -819,6 +850,8 @@ export default function App() {
   const selectedBudgetTier = getBudgetTier(selectedBudgetTierId);
   // Estilo agora e opcional: usuario pode escrever uma direcao livre OU deixar a IA escolher.
   const canGenerateDecoration = Boolean(selectedProductProvider && selectedProductProvider.status === 'active');
+  // PRO: precisa de foto + loja ativa + lista de peças (prompt). Estilo/cômodo são derivados.
+  const canGeneratePro = Boolean(selectedImage && selectedProductProvider && selectedProductProvider.status === 'active' && proPrompt.trim().length >= 10);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('bhome_lang');
@@ -906,7 +939,7 @@ export default function App() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => { setSelectedImage(reader.result as string); setCurrentStep(2); };
+      reader.onloadend = () => { setSelectedImage(reader.result as string); setCurrentStep(appMode === 'pro' ? 3 : 2); };
       reader.readAsDataURL(file);
     }
   };
@@ -937,11 +970,17 @@ export default function App() {
     setTechnicalBrief('');
     setWayfairBudget([]);
     setWayfairBudgetNote('');
-    setCurrentStep(2);
+    setSelectedImage(null);
+    setProPrompt('');
+    setSelectedRoomId(null);
+    setAppMode(null);
+    setCurrentStep(1);
   };
 
   const generateDecoration = async (overrideMaterial?: string, targetStyleId?: string) => {
-    if (!selectedImage || !selectedRoomId) return;
+    // PRO usa a foto + lista de peças; o cômodo é detectado pela IA (ai_detect).
+    if (appMode === 'pro' && !selectedRoomId) setSelectedRoomId('ai_detect');
+    if (!selectedImage || (!selectedRoomId && appMode !== 'pro')) return;
     
     // Estilo agora e opcional. effectiveStyleId pode ser null se usuario nao escolheu.
     const effectiveStyleId = targetStyleId || selectedStyleId;
@@ -980,8 +1019,15 @@ export default function App() {
       const budgetInstruction = selectedBudgetTier.prompt;
       const userStyleHint = customStyleHint.trim();
 
-      // Direcao de estilo: hint do usuario > preset (legacy) > IA escolhe.
-      const styleDirectionLine = userStyleHint
+      // Direcao de estilo: PRO (lista de peças) > hint do usuario > preset (legacy) > IA escolhe.
+      const styleDirectionLine = appMode === 'pro'
+        ? `PROFESSIONAL ITEM-BY-ITEM BRIEF (written by an interior designer/architect). This is the authoritative design intent — reproduce EACH listed piece faithfully, honoring the stated furniture/object type, material, color, fabric and finish for every item. Arrange them tastefully and realistically within the existing room. Do not invent extra hero pieces beyond the brief, but you may add minimal complementary decor for balance.
+PROCUREMENT NOTE: Each piece must be sourceable on ${selectedProductProvider.name}. If the exact piece is not available, substitute the CLOSEST SIMILAR item (same type, material and color family) — never drop the item.
+ITEMS REQUESTED BY THE PROFESSIONAL (one per line / free text):
+"""
+${proPrompt.trim()}
+"""`
+        : userStyleHint
         ? `Target Style: User direction (free text) — "${userStyleHint}". Interpret this faithfully but only via surface finishes, lighting and movable items.`
         : effectiveStyleId && STYLE_LABELS['en'][effectiveStyleId]
           ? `Target Style: ${STYLE_LABELS['en'][effectiveStyleId]} (${style?.prompt_modifier || 'High-end design'})`
@@ -1074,6 +1120,18 @@ export default function App() {
       
       const enhancedDescription = creativeRes.text;
 
+      // PRO: busca produtos REAIS (SerpApi) — 1 por peça — pra (a) usar como referência
+      // visual no render e (b) montar a lista de compras com preço/link reais.
+      let proProducts: RealProduct[] = [];
+      if (appMode === 'pro') {
+        setLoadingMessage(lang === 'en' ? 'Finding real products in the store…' : lang === 'es' ? 'Buscando productos reales…' : 'Buscando produtos reais na loja…');
+        const lines = proPrompt.trim().split('\n').map(l => l.trim()).filter(l => l.length > 1).slice(0, 8);
+        try { proProducts = await fetchRealProducts(lines, selectedProviderId); } catch (e) { console.warn('SerpApi falhou, sigo sem produtos reais', e); }
+      }
+      const proProductsBlock = proProducts.length
+        ? `\n\nREAL PRODUCTS TO PLACE (matched on ${selectedProductProvider.name} — these are the actual pieces the client will buy). Place each one in the room and reproduce it faithfully from its descriptive name (type, material, color, finish):\n${proProducts.map((p, i) => `${i + 1}. requested "${p.query}" -> "${p.name}"${p.inStore ? '' : ' (closest similar)'}`).join('\n')}`
+        : '';
+
       setLoadingMessage(t.loading.rendering);
       // base64Data ja foi gerado no STEP 0 (recognition) e e reusado aqui.
 
@@ -1098,6 +1156,7 @@ export default function App() {
 	        NEW DESIGN INSTRUCTION (apply ONLY to surfaces, lighting and movable items — never to geometry):
         ${enhancedDescription}
         ${overrideMaterial ? `MATERIAL OVERRIDE: Apply ${overrideMaterial} to all new furniture.` : ''}
+        ${proProductsBlock}
 
         FINAL OVERRIDE (defense-in-depth — beats anything above):
         - If ANY part of the design instruction above suggests moving, adding, removing, resizing or reshaping a wall, window, door, opening, ceiling, floor, column, stair, beam, balcony, loft, fireplace, or changing room dimensions/proportions/perspective/camera, IGNORE THAT PART.
@@ -1108,14 +1167,17 @@ export default function App() {
         Request ID: ${requestId}
       `;
       
+      // Render: foto do ambiente (shell) + prompt. Os produtos reais entram como
+      // DIRETRIZ DE TEXTO (nomes), não como imagem — fotos reais de produto disparam
+      // IMAGE_RECITATION no Gemini e bloqueiam a geração. A foto real fica na lista de compras.
       const result = await generateGeminiContent({
         model: 'gemini-2.5-flash-image',
         contents: {
           parts: [
             { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
-            { text: renderPrompt }
-          ]
-        }
+            { text: renderPrompt },
+          ],
+        },
       });
 
       let imgUrl = null;
@@ -1139,16 +1201,32 @@ export default function App() {
 	          }
 	          setLoadingMessage(`Curando lista de compras ${selectedProductProvider.name}...`);
 	          setWayfairBudget([]);
-	          const shoppingResult = await generateShoppingBudget({
-	              roomLabel,
-	              styleLabel: userStyleHint || (effectiveStyleId && STYLE_LABELS['en'][effectiveStyleId]) || "Designer's choice",
-	              designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
-	              language: lang,
-	              budgetTier: selectedBudgetTier,
-	              provider: selectedProductProvider,
-	          });
-	          setWayfairBudget(shoppingResult.items);
-	          setWayfairBudgetNote(shoppingResult.note);
+	          if (appMode === 'pro' && proProducts.length) {
+	              // Lista de compras = produtos REAIS achados (preço/link/foto reais).
+	              setWayfairBudget(proProducts.map((p) => ({
+	                  name: p.name,
+	                  category: p.query,
+	                  quantity: 1,
+	                  unitPrice: Number(p.price || 0),
+	                  totalPrice: Number(p.price || 0),
+	                  url: p.link || buildProductSearchUrl(selectedProductProvider, p.query),
+	                  validation: 'direct_product' as const,
+	                  imageUrl: p.thumbnail || '',
+	                  note: p.inStore ? '' : (lang === 'en' ? 'closest similar' : lang === 'es' ? 'más parecido' : 'similar mais próximo'),
+	              })));
+	              setWayfairBudgetNote(lang === 'en' ? 'Real products via Google Shopping — verify availability/price before purchase.' : lang === 'es' ? 'Productos reales vía Google Shopping — verifica disponibilidad/precio antes de comprar.' : 'Produtos reais via Google Shopping — confira disponibilidade/preço antes de comprar.');
+	          } else {
+	              const shoppingResult = await generateShoppingBudget({
+	                  roomLabel,
+	                  styleLabel: userStyleHint || (effectiveStyleId && STYLE_LABELS['en'][effectiveStyleId]) || "Designer's choice",
+	                  designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
+	                  language: lang,
+	                  budgetTier: selectedBudgetTier,
+	                  provider: selectedProductProvider,
+	              });
+	              setWayfairBudget(shoppingResult.items);
+	              setWayfairBudgetNote(shoppingResult.note);
+	          }
 	          setCurrentStep(4);
       } else {
           throw new Error("No image generated");
@@ -1164,7 +1242,8 @@ export default function App() {
   };
 
   const handleAuthorizeProject = async () => {
-     if (!generatedImage || !selectedRoomId || !selectedStyleId) return;
+     if (!generatedImage || !selectedRoomId) return;
+     if (appMode !== 'pro' && !selectedStyleId) return;
      if (!(await deductCredits(TECH_REPORT_COST))) return;
      
      setIsGenerating(true);
@@ -1174,7 +1253,7 @@ export default function App() {
          const roomLabel = getSelectedRoomLabel('en');
 	         const prompt = `
             ACT AS A SENIOR INTERIOR ARCHITECT.
-		            PROJECT: ${roomLabel} in ${STYLE_LABELS['en'][selectedStyleId]} style.
+		            PROJECT: ${roomLabel} ${selectedStyleId ? `in ${STYLE_LABELS['en'][selectedStyleId]} style` : 'following the professional\'s piece-by-piece specification'}.
 		            TASK: Create a Professional Project Briefing for the Carpenter/Contractor.
 		            LANGUAGE: ${lang === 'pt' ? 'Portuguese' : lang === 'es' ? 'Spanish' : 'English'}.
 		            SELECTED CLIENT BUDGET: ${getBudgetRangeLabel(selectedBudgetTier, lang)}.
@@ -1222,7 +1301,7 @@ export default function App() {
       doc.setFont("helvetica", "bold");
       doc.text(`Estilo:`, margin, cursorY);
       doc.setFont("helvetica", "normal");
-      doc.text(`${STYLE_LABELS[lang][selectedStyleId!] || selectedStyleId}`, margin + 20, cursorY);
+      doc.text(`${(selectedStyleId && (STYLE_LABELS[lang][selectedStyleId] || selectedStyleId)) || customStyleHint.trim() || (appMode === 'pro' ? (lang === 'en' ? 'Professional spec' : lang === 'es' ? 'Especificación profesional' : 'Especificação profissional') : "Designer's choice")}`, margin + 20, cursorY);
       cursorY += 6;
       doc.setFont("helvetica", "bold");
       doc.text(`Data:`, margin, cursorY);
@@ -1310,7 +1389,7 @@ export default function App() {
 	  };
 
 	  const saveCommercialProject = async () => {
-	      if (!selectedRoomId || !selectedStyleId || !generatedImage) return;
+	      if (!selectedRoomId || !generatedImage || (appMode !== 'pro' && !selectedStyleId)) return;
 	      setSavingProject(true);
 	      setProjectSaveMessage('');
 	      try {
@@ -1320,7 +1399,7 @@ export default function App() {
 	              body: JSON.stringify({
 		                  providerId: selectedProviderId,
 		                  room: getSelectedRoomLabel(lang),
-		                  style: customStyleHint.trim() || (selectedStyleId ? (STYLE_LABELS[lang][selectedStyleId] || selectedStyleId) : "Designer's choice"),
+		                  style: (appMode === 'pro' && proPrompt.trim()) ? `Pro: ${proPrompt.trim().split('\n').filter(l => l.trim()).length} peças` : customStyleHint.trim() || (selectedStyleId ? (STYLE_LABELS[lang][selectedStyleId] || selectedStyleId) : "Designer's choice"),
 		                  budgetTier: selectedBudgetTierId,
 		                  budgetRange: getBudgetRangeLabel(selectedBudgetTier, lang),
 		                  budgetItems: wayfairBudget,
@@ -1396,11 +1475,40 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {appMode === null ? (
+        /* TELA INICIAL — escolha do caminho (mantém o fluxo atual intacto) */
+        <div className="lg:col-span-12 animate-fade-in">
+          <div className="max-w-3xl mx-auto text-center mb-10">
+            <h1 className="text-3xl md:text-5xl font-black leading-tight text-[#2f1a35]">
+              {lang === 'en' ? 'How do you want to decorate?' : lang === 'es' ? '¿Cómo quieres decorar?' : 'Como você quer decorar?'}
+            </h1>
+            <p className="mt-4 text-base md:text-lg text-[#6f6075]">
+              {lang === 'en' ? 'Pick a path. You can switch anytime.' : lang === 'es' ? 'Elige un camino. Puedes cambiar cuando quieras.' : 'Escolha um caminho. Você pode trocar quando quiser.'}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <button onClick={() => { setAppMode('standard'); setCurrentStep(1); }} className="text-left bg-white border border-[#eadff2] rounded-2xl p-7 shadow-xl hover:border-[#7F187F] hover:-translate-y-0.5 transition-all">
+              <div className="w-14 h-14 bg-[#f3e8ff] rounded-xl flex items-center justify-center mb-5"><Sparkles size={28} className="text-[#7F187F]" /></div>
+              <h2 className="text-xl font-black text-[#2f1a35]">{lang === 'en' ? 'Guided (by ambience)' : lang === 'es' ? 'Guiado (por ambiente)' : 'Guiado (por ambiente)'}</h2>
+              <p className="text-sm text-[#6f6075] mt-2 leading-relaxed">{lang === 'en' ? 'Choose room and style — the AI designs the whole space. Best for homeowners.' : lang === 'es' ? 'Elige ambiente y estilo — la IA diseña todo. Ideal para clientes finales.' : 'Escolha cômodo e estilo — a IA decora o ambiente inteiro. Ideal para o cliente final.'}</p>
+            </button>
+            <button onClick={() => { setAppMode('pro'); setSelectedRoomId('ai_detect'); setCurrentStep(1); }} className="text-left bg-white border border-[#7F187F]/40 rounded-2xl p-7 shadow-xl hover:border-[#7F187F] hover:-translate-y-0.5 transition-all relative">
+              <span className="absolute top-4 right-4 text-[10px] font-black uppercase tracking-wide text-[#7F187F] bg-[#f3e8ff] px-2 py-1 rounded-full">Pro</span>
+              <div className="w-14 h-14 bg-[#f3e8ff] rounded-xl flex items-center justify-center mb-5"><Wand2 size={28} className="text-[#7F187F]" /></div>
+              <h2 className="text-xl font-black text-[#2f1a35]">{lang === 'en' ? 'Professional (piece by piece)' : lang === 'es' ? 'Profesional (pieza por pieza)' : 'Profissional (peça por peça)'}</h2>
+              <p className="text-sm text-[#6f6075] mt-2 leading-relaxed">{lang === 'en' ? 'Describe each piece in your own words. The app sources each item from the store and composes the scene. For decorators & architects.' : lang === 'es' ? 'Describe cada pieza con tus palabras. La app busca cada ítem en la tienda y compone la escena. Para decoradores y arquitectos.' : 'Descreva cada peça com suas palavras. O app busca item a item na loja e monta a cena. Para decoradores e arquitetos.'}</p>
+            </button>
+          </div>
+        </div>
+        ) : (
+        <>
         {/* SIDEBAR */}
         <div className="lg:col-span-3 space-y-2">
            <Step number={1} title={t.steps.upload} isActive={currentStep===1} isCompleted={currentStep>1} />
-           <Step number={2} title={t.steps.room} isActive={currentStep===2} isCompleted={currentStep>2} />
-           <Step number={3} title={t.steps.style} isActive={currentStep===3} isCompleted={currentStep>3} />
+           {appMode !== 'pro' && (
+             <Step number={2} title={t.steps.room} isActive={currentStep===2} isCompleted={currentStep>2} />
+           )}
+           <Step number={appMode === 'pro' ? 2 : 3} title={appMode === 'pro' ? (lang === 'en' ? 'Pieces (prompt)' : lang === 'es' ? 'Piezas (prompt)' : 'Peças (prompt)') : t.steps.style} isActive={currentStep===3} isCompleted={currentStep>3} />
            <div className="mt-8">
                <Step number={4} title={t.steps.project} isActive={currentStep===4} isCompleted={isApproved} />
            </div>
@@ -1606,20 +1714,20 @@ export default function App() {
 	                            <div className="flex items-start gap-3 mb-3">
 	                                <Wand2 className="w-5 h-5 text-[#7F187F] shrink-0 mt-0.5" />
 	                                <div>
-	                                    <h3 className="font-black text-[#2f1a35]">{t.styleSelect.styleHintTitle}</h3>
-	                                    <p className="text-xs text-[#85758a]">{t.styleSelect.styleHintSubtitle}</p>
+	                                    <h3 className="font-black text-[#2f1a35]">{appMode === 'pro' ? (lang === 'en' ? 'Pieces — describe each one' : lang === 'es' ? 'Piezas — describe cada una' : 'Peças — descreva cada uma') : t.styleSelect.styleHintTitle}</h3>
+	                                    <p className="text-xs text-[#85758a]">{appMode === 'pro' ? (lang === 'en' ? 'One item per line: type, material, color, fabric. We source each from the store (closest match if exact is unavailable).' : lang === 'es' ? 'Un ítem por línea: tipo, material, color, tela. Buscamos cada uno en la tienda (el más parecido si no hay exacto).' : 'Um item por linha: tipo, material, cor, tecido. Buscamos cada um na loja (o mais parecido se não houver exato).') : t.styleSelect.styleHintSubtitle}</p>
 	                                </div>
 	                            </div>
 	                            <textarea
-	                                value={customStyleHint}
-	                                onChange={(e) => setCustomStyleHint(e.target.value)}
-	                                placeholder={t.styleSelect.styleHintPlaceholder}
-	                                rows={2}
-	                                maxLength={280}
+	                                value={appMode === 'pro' ? proPrompt : customStyleHint}
+	                                onChange={(e) => (appMode === 'pro' ? setProPrompt(e.target.value) : setCustomStyleHint(e.target.value))}
+	                                placeholder={appMode === 'pro' ? (lang === 'en' ? 'e.g.\nGlass table lamp, green base\nBrown velvet chaise lounge\nRound jute rug, 2m\nAbstract canvas art, warm tones' : lang === 'es' ? 'ej.\nLámpara de vidrio, base verde\nChaise longue de terciopelo marrón\nAlfombra de yute redonda, 2m\nCuadro abstracto, tonos cálidos' : 'ex.\nAbajur de vidro, base verde\nEspreguiçadeira de veludo marrom\nTapete de juta redondo, 2m\nQuadro abstrato, tons quentes') : t.styleSelect.styleHintPlaceholder}
+	                                rows={appMode === 'pro' ? 7 : 2}
+	                                maxLength={appMode === 'pro' ? 2000 : 280}
 	                                className="w-full bg-[#f7f3fb] border border-[#dac7e5] rounded-lg p-3 text-sm text-[#2f1a35] placeholder:text-[#a596ad] focus:outline-none focus:border-[#7F187F] focus:ring-2 focus:ring-[#7F187F]/20 resize-none"
 	                            />
 	                            <p className="text-[11px] text-[#85758a] mt-2 italic">
-	                                {customStyleHint.trim() ? t.styleSelect.styleHintUsing : t.styleSelect.styleHintAiChoice}
+	                                {appMode === 'pro' ? (proPrompt.trim().length < 10 ? (lang === 'en' ? 'List at least one piece to generate.' : lang === 'es' ? 'Lista al menos una pieza para generar.' : 'Liste ao menos uma peça para gerar.') : (lang === 'en' ? `${proPrompt.trim().split('\n').filter(l => l.trim()).length} piece(s) — geometry of the room stays locked.` : lang === 'es' ? `${proPrompt.trim().split('\n').filter(l => l.trim()).length} pieza(s) — la geometría del ambiente queda bloqueada.` : `${proPrompt.trim().split('\n').filter(l => l.trim()).length} peça(s) — a geometria do ambiente fica travada.`)) : (customStyleHint.trim() ? t.styleSelect.styleHintUsing : t.styleSelect.styleHintAiChoice)}
 	                            </p>
 	                        </div>
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white border border-[#eadff2] rounded-2xl p-4">
@@ -1627,13 +1735,13 @@ export default function App() {
                                 <div className="font-black">
                                     {selectedProductProvider ? selectedProductProvider.name : t.styleSelect.missingStore}
                                     {' · '}
-                                    {customStyleHint.trim() ? customStyleHint.trim().slice(0, 60) + (customStyleHint.trim().length > 60 ? '…' : '') : t.styleSelect.styleHintAiChoiceShort}
+                                    {appMode === 'pro' ? (lang === 'en' ? `${proPrompt.trim().split('\n').filter(l => l.trim()).length} piece(s)` : lang === 'es' ? `${proPrompt.trim().split('\n').filter(l => l.trim()).length} pieza(s)` : `${proPrompt.trim().split('\n').filter(l => l.trim()).length} peça(s)`) : (customStyleHint.trim() ? customStyleHint.trim().slice(0, 60) + (customStyleHint.trim().length > 60 ? '…' : '') : t.styleSelect.styleHintAiChoiceShort)}
                                     {' · '}
                                     {getBudgetRangeLabel(selectedBudgetTier, lang)}
                                 </div>
                                 <div className="text-xs text-[#85758a] mt-1">A imagem e o inventário serão gerados somente depois dessas escolhas.</div>
                             </div>
-                            <button onClick={() => generateDecoration()} disabled={loadingStyles || !canGenerateDecoration} className="bg-[#7F187F] px-10 py-4 rounded-xl font-bold text-white hover:bg-[#651365] shadow-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"><Wand2 className="mr-2"/> {canGenerateDecoration ? t.styleSelect.generate : t.styleSelect.missingStore}</button>
+                            <button onClick={() => generateDecoration()} disabled={loadingStyles || (appMode === 'pro' ? !canGeneratePro : !canGenerateDecoration)} className="bg-[#7F187F] px-10 py-4 rounded-xl font-bold text-white hover:bg-[#651365] shadow-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"><Wand2 className="mr-2"/> {(appMode === 'pro' ? canGeneratePro : canGenerateDecoration) ? t.styleSelect.generate : (appMode === 'pro' && selectedProductProvider?.status === 'active' ? (lang === 'en' ? 'List the pieces' : lang === 'es' ? 'Lista las piezas' : 'Liste as peças') : t.styleSelect.missingStore)}</button>
                         </div>
                     </div>
                 )}
@@ -1693,6 +1801,7 @@ export default function App() {
 	                            <div className="divide-y divide-[#eadff2]">
 	                                {wayfairBudget.length > 0 ? wayfairBudget.map((item, index) => (
 	                                    <div key={`${item.name}-${index}`} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+	                                        {item.imageUrl && <img src={item.imageUrl} alt={item.name} loading="lazy" className="w-16 h-16 rounded-lg object-cover border border-[#eadff2] shrink-0 bg-white" />}
 	                                        <div className="min-w-0">
 	                                            <div className="flex flex-wrap items-center gap-2">
 	                                                <span className="text-xs bg-[#f3e8ff] text-[#4b3650] px-2 py-1 rounded font-bold">{item.category}</span>
@@ -1833,6 +1942,8 @@ export default function App() {
                </>
            )}
         </div>
+        </>
+        )}
       </main>
 
       {/* PAYWALL MODAL */}

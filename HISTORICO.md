@@ -10,10 +10,52 @@ AI: Gemini 2.5 Flash (texto) + Gemini 2.5 Flash Image (renderer)
 ## Integrações ativas
 - MongoDB Atlas (mongo://...): coleções `styles`, `config`, `credits`, `projects`
 - Gemini API (Google GenAI SDK) — key em `.env` server-side
+- SerpApi (Google Shopping) — `SERPAPI_KEY` no `.env` (conta compartilhada do José); endpoint `POST /api/catalog/search`
 - Stripe (frontend `@stripe/stripe-js`) — paywall créditos
 - Tailwind CDN runtime (`cdn.tailwindcss.com`) — **risco**: JIT em runtime falha com arbitrary values dinâmicos, deve migrar pra Tailwind v4 inline em algum momento
 
 ## Sessões
+
+### 2026-06-04 — Lojas BR + conector nativo de catálogo
+**Commits:** `0aea9b2` (Tok&Stok) · `3169658` (Koiza di Kaza) · `6e53703` (conector nativo)
+
+- **Tok&Stok** e **Koiza di Kaza** cadastradas (ativas). SerpApi com locale BR (gl=br, BRL) p/ lojas `.com.br`.
+- **Conector nativo** (`store-catalog.mjs`) p/ lojas que o Google Shopping não indexa:
+  - crawl do sitemap → páginas de produto → extrai nome/preço/imagem/url/categoria → Mongo `store_products`.
+  - busca local por relevância de tokens (acento-insensível).
+  - extractor `koizadikaza` (produto = `/categoria/slug/`, preço `.price-container .price`, img `/arquivos/produtos/...webp`).
+  - **643 produtos** ingeridos. `/api/catalog/search` usa nativo PRIMEIRO, SerpApi fallback.
+- Endpoints novos: `POST /api/catalog/sync {providerId}` (recrawl) e `source` no `/api/catalog/search`.
+- Cron `/etc/cron.d/decora-catalog-sync` — refresh diário 05:10 (log em `/var/log/decora-catalog-sync.log`).
+- **Testado (prod):** busca nativa `source:native` → produtos reais Koiza c/ preço BRL + link. Tok&Stok via SerpApi BR OK.
+
+**Pendente:** validar render pro com fotos reais · merge `feat/pro-mode`→main · UX escolher entre similares · novos extractors p/ outras lojas pequenas.
+
+### 2026-06-04 — Modo Profissional (peça por peça) + produtos reais SerpApi
+**Commits:** `a2727f2` (modo pro) · `8e78dab` (SerpApi) · branch `feat/pro-mode`
+
+**Pedido:** 2º fluxo p/ decoradores/arquitetos — descrevem peça a peça via prompt; app
+busca item a item na loja, traz similar se não houver exato, compõe a "imagem de
+encantamento". Sem desfazer o fluxo atual.
+
+**Entregue:**
+- Tela inicial de escolha: *Guiado (ambiente)* = fluxo atual intacto · *Profissional (peça por peça)*.
+- Pro: foto obrigatória → prompt livre item a item (substitui estilo/cômodo). Cômodo via `ai_detect`.
+- Reusa pipeline survey→creative→render (geometria travada) + loja + orçamento.
+- **SerpApi/Google Shopping** (`SERPAPI_KEY` no .env):
+  - `server.mjs`: `serpShopping()` + `POST /api/catalog/search` (prioriza loja escolhida; thumbnail base64 server-side p/ evitar CORS).
+  - 1 busca real por peça → fotos dos produtos entram como REFERÊNCIA no render (gemini-2.5-flash-image multi-imagem).
+  - Lista de compras = produtos reais (preço/link/foto). Fallback p/ Gemini se SerpApi falhar.
+  - `WayfairBudgetItem.imageUrl` + thumbnail no passo 4.
+- Guards de style/cômodo liberados p/ pro (authorize, save, PDF).
+
+**Testado (prod):** `/api/catalog/search` → produtos reais Wayfair c/ preço+source+thumbnail base64. Build OK (`index-BnRh81jn.js`), página 200, health 200.
+
+**Pendente:**
+- [ ] José validar visualmente o render pro (fidelidade das peças reais).
+- [ ] Merge `feat/pro-mode` → `main` (dist já live via nginx).
+- [ ] UX opcional: pro escolher entre os similares antes de renderizar (hoje pega o top).
+- [ ] Custo SerpApi: até 8 queries/geração — monitorar. Preços em USD (Wayfair US).
 
 ### 2026-06-02 — Fix: estilos invisíveis + IA mudando arquitetura
 **Commit:** `d356881`
