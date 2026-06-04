@@ -30,6 +30,9 @@ const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb:/
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'decore_ai';
 const DEFAULT_CLIENT_ID = 'default';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+const SERPAPI_KEY = process.env.SERPAPI_KEY || '';
+// Domínios por loja — pra priorizar resultados da loja escolhida no Google Shopping.
+const PROVIDER_DOMAINS = { wayfair: 'wayfair.com', target: 'target.com', 'home-depot': 'homedepot.com', ikea: 'ikea.com', 'west-elm': 'westelm.com' };
 
 let mongoClient = null;
 let mongoDb = null;
@@ -298,6 +301,57 @@ const isDirectProductUrl = (url, providerId) => {
 const buildSearchUrl = (provider, term) =>
   provider.searchUrl ? `${provider.searchUrl}${encodeURIComponent(String(term || 'home decor').trim())}` : '';
 
+// Busca produtos REAIS via SerpApi (Google Shopping), priorizando a loja escolhida.
+// Retorna [{name, price, currency, source, inStore, link, thumbnail, image?}].
+const fetchThumb = async (url) => {
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!r.ok) return '';
+    const ct = r.headers.get('content-type') || 'image/jpeg';
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (buf.length > 700000) return '';
+    return `data:${ct};base64,${buf.toString('base64')}`;
+  } catch { return ''; }
+};
+
+const serpShopping = async ({ query, providerId = 'wayfair', limit = 4, withImage = false }) => {
+  if (!SERPAPI_KEY) throw new Error('SERPAPI_KEY ausente');
+  const q = String(query || '').trim();
+  if (!q) return [];
+  const provider = PROVIDERS.find((p) => p.id === providerId);
+  const domain = PROVIDER_DOMAINS[providerId];
+  const u = new URL('https://serpapi.com/search.json');
+  u.searchParams.set('engine', 'google_shopping');
+  u.searchParams.set('q', domain ? `${q} ${provider?.name || ''}`.trim() : q);
+  u.searchParams.set('gl', 'us');
+  u.searchParams.set('hl', 'en');
+  u.searchParams.set('num', String(Math.min(40, Math.max(8, limit * 5))));
+  u.searchParams.set('api_key', SERPAPI_KEY);
+  const r = await fetch(u, { signal: AbortSignal.timeout(20000) });
+  const j = await r.json();
+  if (j.error) throw new Error(`serpapi: ${j.error}`);
+  const results = Array.isArray(j.shopping_results) ? j.shopping_results : [];
+  const inStore = (x) => Boolean(domain && provider && String(x.source || '').toLowerCase().includes(provider.name.toLowerCase()));
+  results.sort((a, b) => (inStore(b) ? 1 : 0) - (inStore(a) ? 1 : 0));
+  const top = results.slice(0, limit);
+  const items = [];
+  for (const x of top) {
+    const item = {
+      name: x.title || q,
+      price: Number(x.extracted_price || 0),
+      currency: 'USD',
+      source: x.source || '',
+      inStore: inStore(x),
+      link: x.product_link || x.link || (provider ? buildSearchUrl(provider, q) : ''),
+      thumbnail: x.thumbnail || '',
+      image: '',
+    };
+    if (withImage && x.thumbnail) item.image = await fetchThumb(x.thumbnail);
+    items.push(item);
+  }
+  return items;
+};
+
 const normalizeProject = (payload) => {
   const providerId = payload.providerId || 'wayfair';
   const provider = PROVIDERS.find((entry) => entry.id === providerId) || PROVIDERS[0];
@@ -409,6 +463,21 @@ createServer(async (req, res) => {
         validation: provider.status === 'active' ? 'search_result' : 'planned_provider',
         note: provider.note,
       });
+    }
+    if (req.method === 'POST' && url.pathname === '/api/catalog/search') {
+      const body = await readBody(req);
+      try {
+        const items = await serpShopping({
+          query: String(body.itemName || body.query || '').trim(),
+          providerId: body.providerId || 'wayfair',
+          limit: Math.min(6, Math.max(1, Number(body.limit || 4))),
+          withImage: Boolean(body.withImage),
+        });
+        return json(res, 200, { items, configured: Boolean(SERPAPI_KEY) });
+      } catch (error) {
+        console.error('catalog/search failed:', error?.message || error);
+        return json(res, 502, { error: 'serp_error', message: String(error?.message || error), items: [] });
+      }
     }
     if (req.method === 'GET' && url.pathname === '/api/projects') {
       const projects = await readStoredProjects();

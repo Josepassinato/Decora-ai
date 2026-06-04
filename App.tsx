@@ -92,6 +92,7 @@ type WayfairBudgetItem = {
   url: string;
   validation: 'direct_product' | 'search_result';
   note?: string;
+  imageUrl?: string; // thumbnail real do produto (SerpApi) — modo Profissional
 };
 
 type BudgetTierId = 'essential' | 'balanced' | 'premium';
@@ -355,6 +356,26 @@ Return ONLY valid JSON:
     items,
     note: String(parsed.note || `${params.provider.name} shopping list generated with product links/search links for final validation.`),
   };
+};
+
+// Modo Profissional: busca produtos REAIS (SerpApi/Google Shopping) — 1 por peça descrita.
+// Retorna o melhor match por linha (prioriza a loja escolhida; senão, similar).
+type RealProduct = { query: string; name: string; price: number; source: string; inStore: boolean; link: string; thumbnail: string; image: string };
+const fetchRealProducts = async (lines: string[], providerId: string): Promise<RealProduct[]> => {
+  const picks = await Promise.all(lines.map(async (line) => {
+    try {
+      const r = await fetch('/api/catalog/search', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemName: line, providerId, limit: 3, withImage: true }),
+      });
+      if (!r.ok) return null;
+      const d = await r.json();
+      const items = Array.isArray(d.items) ? d.items : [];
+      const best = items.find((i: any) => i.inStore) || items[0];
+      return best ? { query: line, name: best.name, price: Number(best.price || 0), source: best.source || '', inStore: !!best.inStore, link: best.link || '', thumbnail: best.thumbnail || '', image: best.image || '' } : null;
+    } catch { return null; }
+  }));
+  return picks.filter(Boolean) as RealProduct[];
 };
 
 const TRANSLATIONS = {
@@ -1093,6 +1114,18 @@ ${proPrompt.trim()}
       
       const enhancedDescription = creativeRes.text;
 
+      // PRO: busca produtos REAIS (SerpApi) — 1 por peça — pra (a) usar como referência
+      // visual no render e (b) montar a lista de compras com preço/link reais.
+      let proProducts: RealProduct[] = [];
+      if (appMode === 'pro') {
+        setLoadingMessage(lang === 'en' ? 'Finding real products in the store…' : lang === 'es' ? 'Buscando productos reales…' : 'Buscando produtos reais na loja…');
+        const lines = proPrompt.trim().split('\n').map(l => l.trim()).filter(l => l.length > 1).slice(0, 8);
+        try { proProducts = await fetchRealProducts(lines, selectedProviderId); } catch (e) { console.warn('SerpApi falhou, sigo sem produtos reais', e); }
+      }
+      const proProductsBlock = proProducts.length
+        ? `\n\nREAL PRODUCTS TO PLACE (sourced from ${selectedProductProvider.name}). Reference photos of these exact items are attached AFTER this text, in the same order. Place each one in the room and reproduce its look (shape, material, color, finish) faithfully — these are the actual pieces the client will buy:\n${proProducts.map((p, i) => `${i + 1}. requested "${p.query}" -> "${p.name}"${p.inStore ? '' : ' (closest similar)'}`).join('\n')}`
+        : '';
+
       setLoadingMessage(t.loading.rendering);
       // base64Data ja foi gerado no STEP 0 (recognition) e e reusado aqui.
 
@@ -1117,6 +1150,7 @@ ${proPrompt.trim()}
 	        NEW DESIGN INSTRUCTION (apply ONLY to surfaces, lighting and movable items — never to geometry):
         ${enhancedDescription}
         ${overrideMaterial ? `MATERIAL OVERRIDE: Apply ${overrideMaterial} to all new furniture.` : ''}
+        ${proProductsBlock}
 
         FINAL OVERRIDE (defense-in-depth — beats anything above):
         - If ANY part of the design instruction above suggests moving, adding, removing, resizing or reshaping a wall, window, door, opening, ceiling, floor, column, stair, beam, balcony, loft, fireplace, or changing room dimensions/proportions/perspective/camera, IGNORE THAT PART.
@@ -1127,14 +1161,21 @@ ${proPrompt.trim()}
         Request ID: ${requestId}
       `;
       
+      // Render parts: foto do ambiente (shell) + prompt + fotos reais dos produtos (referência).
+      const renderParts: any[] = [
+        { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
+        { text: renderPrompt },
+      ];
+      for (const p of proProducts) {
+        if (!p.image || !p.image.includes(',')) continue;
+        const [meta, data] = p.image.split(',');
+        const mime = (meta.match(/data:(.*?);/) || [])[1] || 'image/jpeg';
+        renderParts.push({ inlineData: { mimeType: mime, data } });
+      }
+
       const result = await generateGeminiContent({
         model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [
-            { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
-            { text: renderPrompt }
-          ]
-        }
+        contents: { parts: renderParts }
       });
 
       let imgUrl = null;
@@ -1158,16 +1199,32 @@ ${proPrompt.trim()}
 	          }
 	          setLoadingMessage(`Curando lista de compras ${selectedProductProvider.name}...`);
 	          setWayfairBudget([]);
-	          const shoppingResult = await generateShoppingBudget({
-	              roomLabel,
-	              styleLabel: userStyleHint || (effectiveStyleId && STYLE_LABELS['en'][effectiveStyleId]) || "Designer's choice",
-	              designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
-	              language: lang,
-	              budgetTier: selectedBudgetTier,
-	              provider: selectedProductProvider,
-	          });
-	          setWayfairBudget(shoppingResult.items);
-	          setWayfairBudgetNote(shoppingResult.note);
+	          if (appMode === 'pro' && proProducts.length) {
+	              // Lista de compras = produtos REAIS achados (preço/link/foto reais).
+	              setWayfairBudget(proProducts.map((p) => ({
+	                  name: p.name,
+	                  category: p.query,
+	                  quantity: 1,
+	                  unitPrice: Number(p.price || 0),
+	                  totalPrice: Number(p.price || 0),
+	                  url: p.link || buildProductSearchUrl(selectedProductProvider, p.query),
+	                  validation: 'direct_product' as const,
+	                  imageUrl: p.thumbnail || '',
+	                  note: p.inStore ? '' : (lang === 'en' ? 'closest similar' : lang === 'es' ? 'más parecido' : 'similar mais próximo'),
+	              })));
+	              setWayfairBudgetNote(lang === 'en' ? 'Real products via Google Shopping — verify availability/price before purchase.' : lang === 'es' ? 'Productos reales vía Google Shopping — verifica disponibilidad/precio antes de comprar.' : 'Produtos reais via Google Shopping — confira disponibilidade/preço antes de comprar.');
+	          } else {
+	              const shoppingResult = await generateShoppingBudget({
+	                  roomLabel,
+	                  styleLabel: userStyleHint || (effectiveStyleId && STYLE_LABELS['en'][effectiveStyleId]) || "Designer's choice",
+	                  designDescription: `${enhancedDescription || ''}${overrideMaterial ? `\nMaterial override: ${overrideMaterial}` : ''}`,
+	                  language: lang,
+	                  budgetTier: selectedBudgetTier,
+	                  provider: selectedProductProvider,
+	              });
+	              setWayfairBudget(shoppingResult.items);
+	              setWayfairBudgetNote(shoppingResult.note);
+	          }
 	          setCurrentStep(4);
       } else {
           throw new Error("No image generated");
@@ -1742,6 +1799,7 @@ ${proPrompt.trim()}
 	                            <div className="divide-y divide-[#eadff2]">
 	                                {wayfairBudget.length > 0 ? wayfairBudget.map((item, index) => (
 	                                    <div key={`${item.name}-${index}`} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+	                                        {item.imageUrl && <img src={item.imageUrl} alt={item.name} loading="lazy" className="w-16 h-16 rounded-lg object-cover border border-[#eadff2] shrink-0 bg-white" />}
 	                                        <div className="min-w-0">
 	                                            <div className="flex flex-wrap items-center gap-2">
 	                                                <span className="text-xs bg-[#f3e8ff] text-[#4b3650] px-2 py-1 rounded font-bold">{item.category}</span>
