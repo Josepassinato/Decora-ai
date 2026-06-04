@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { MongoClient } from 'mongodb';
 import { GoogleGenAI } from '@google/genai';
+import { hasNativeConnector, searchLocalCatalog, syncStoreCatalog } from './store-catalog.mjs';
 
 const loadEnvFile = async () => {
   try {
@@ -487,17 +488,35 @@ createServer(async (req, res) => {
     }
     if (req.method === 'POST' && url.pathname === '/api/catalog/search') {
       const body = await readBody(req);
+      const providerId = body.providerId || 'wayfair';
+      const query = String(body.itemName || body.query || '').trim();
+      const limit = Math.min(6, Math.max(1, Number(body.limit || 4)));
+      const withImage = Boolean(body.withImage);
       try {
-        const items = await serpShopping({
-          query: String(body.itemName || body.query || '').trim(),
-          providerId: body.providerId || 'wayfair',
-          limit: Math.min(6, Math.max(1, Number(body.limit || 4))),
-          withImage: Boolean(body.withImage),
-        });
-        return json(res, 200, { items, configured: Boolean(SERPAPI_KEY) });
+        // Loja com conector nativo (catálogo próprio no Mongo) → usa primeiro; SerpApi é fallback.
+        if (hasNativeConnector(providerId)) {
+          const db = await getMongoDb();
+          const local = await searchLocalCatalog(db, providerId, query, { limit, withImage });
+          if (local.length) return json(res, 200, { items: local, source: 'native' });
+        }
+        const items = await serpShopping({ query, providerId, limit, withImage });
+        return json(res, 200, { items, source: 'serpapi', configured: Boolean(SERPAPI_KEY) });
       } catch (error) {
         console.error('catalog/search failed:', error?.message || error);
         return json(res, 502, { error: 'serp_error', message: String(error?.message || error), items: [] });
+      }
+    }
+    if (req.method === 'POST' && url.pathname === '/api/catalog/sync') {
+      const body = await readBody(req);
+      const providerId = body.providerId || '';
+      if (!hasNativeConnector(providerId)) return json(res, 400, { error: 'no_connector', message: `sem conector nativo para ${providerId}` });
+      try {
+        const db = await getMongoDb();
+        const result = await syncStoreCatalog(db, providerId, { limit: Number(body.limit || 0), concurrency: Number(body.concurrency || 8) });
+        return json(res, 200, result);
+      } catch (error) {
+        console.error('catalog/sync failed:', error?.message || error);
+        return json(res, 502, { error: 'sync_error', message: String(error?.message || error) });
       }
     }
     if (req.method === 'GET' && url.pathname === '/api/projects') {
