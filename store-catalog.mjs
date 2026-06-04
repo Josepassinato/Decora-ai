@@ -138,8 +138,13 @@ export const searchLocalCatalog = async (db, providerId, query, { limit = 4, wit
     let hits = 0;
     for (const t of qTokens) if (set.has(t)) hits += 1;
     const coverage = hits / qTokens.length;
-    return { d, score: hits * 10 + coverage * 5 - (d.name.length / 100) };
-  }).sort((a, b) => b.score - a.score).slice(0, limit);
+    return { d, hits, coverage, score: hits * 10 + coverage * 5 - (d.name.length / 100) };
+  })
+    // Piso de relevância: descarta match fraco (ex. 1 token de 3) — assim o endpoint
+    // cai pro SerpApi em vez de devolver produto irrelevante.
+    .filter((x) => x.coverage >= 0.5 || x.hits >= 2)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
 
   const items = [];
   for (const { d } of scored) {
