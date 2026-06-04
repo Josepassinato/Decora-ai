@@ -372,7 +372,7 @@ const fetchRealProducts = async (lines: string[], providerId: string): Promise<R
     try {
       const r = await fetch('/api/catalog/search', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemName: line, providerId, limit: 3, withImage: true }),
+        body: JSON.stringify({ itemName: line, providerId, limit: 3, withImage: false }),
       });
       if (!r.ok) return null;
       const d = await r.json();
@@ -1129,7 +1129,7 @@ ${proPrompt.trim()}
         try { proProducts = await fetchRealProducts(lines, selectedProviderId); } catch (e) { console.warn('SerpApi falhou, sigo sem produtos reais', e); }
       }
       const proProductsBlock = proProducts.length
-        ? `\n\nREAL PRODUCTS TO PLACE (sourced from ${selectedProductProvider.name}). Reference photos of these exact items are attached AFTER this text, in the same order. Place each one in the room and reproduce its look (shape, material, color, finish) faithfully — these are the actual pieces the client will buy:\n${proProducts.map((p, i) => `${i + 1}. requested "${p.query}" -> "${p.name}"${p.inStore ? '' : ' (closest similar)'}`).join('\n')}`
+        ? `\n\nREAL PRODUCTS TO PLACE (matched on ${selectedProductProvider.name} — these are the actual pieces the client will buy). Place each one in the room and reproduce it faithfully from its descriptive name (type, material, color, finish):\n${proProducts.map((p, i) => `${i + 1}. requested "${p.query}" -> "${p.name}"${p.inStore ? '' : ' (closest similar)'}`).join('\n')}`
         : '';
 
       setLoadingMessage(t.loading.rendering);
@@ -1167,21 +1167,17 @@ ${proPrompt.trim()}
         Request ID: ${requestId}
       `;
       
-      // Render parts: foto do ambiente (shell) + prompt + fotos reais dos produtos (referência).
-      const renderParts: any[] = [
-        { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
-        { text: renderPrompt },
-      ];
-      for (const p of proProducts) {
-        if (!p.image || !p.image.includes(',')) continue;
-        const [meta, data] = p.image.split(',');
-        const mime = (meta.match(/data:(.*?);/) || [])[1] || 'image/jpeg';
-        renderParts.push({ inlineData: { mimeType: mime, data } });
-      }
-
+      // Render: foto do ambiente (shell) + prompt. Os produtos reais entram como
+      // DIRETRIZ DE TEXTO (nomes), não como imagem — fotos reais de produto disparam
+      // IMAGE_RECITATION no Gemini e bloqueiam a geração. A foto real fica na lista de compras.
       const result = await generateGeminiContent({
         model: 'gemini-2.5-flash-image',
-        contents: { parts: renderParts }
+        contents: {
+          parts: [
+            { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
+            { text: renderPrompt },
+          ],
+        },
       });
 
       let imgUrl = null;
