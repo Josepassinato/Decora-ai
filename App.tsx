@@ -19,16 +19,16 @@ const DEFAULT_SYSTEM_MEMORY = {
 	      5. DIMENSION LOCK: The room must remain identical in scale, proportions, depth, width, ceiling height, perspective and camera viewpoint. Never stretch, shrink, rotate, reframe or rearrange the room.
 	      6. LAYOUT LOCK: Keep the exact location of every wall edge, floor edge, ceiling edge, doorway, window, built-in element, plumbing fixture, staircase and column. New objects must adapt to the existing room, not the opposite.
       
-      MANDATORY 2025 LUXURY SPECS:
-      - LIGHTING: Magnetic Track Systems (Trilho Magnético), Linear LED Profiles (3000K). NO central simple bulbs.
-      - MATERIALS: Fluted Wood (Ripado), Natural Stone (Travertine/Calacatta), Matte Lacquer, Bronze Glass.
-      - FURNITURE: Floor-to-ceiling custom joinery. High-end Italian design.
+      DESIGN SCOPE (CONSERVATIVE — a estrutura vem acima de tudo):
+      - You may ONLY change MOVABLE items + surface decoration: free-standing furniture (sofas, chairs, tables, floor-standing shelving), rugs, wall art, mirrors, plants, decorative objects, PAINT/wallpaper color on the existing walls, and ARTIFICIAL lighting (floor/table lamps, plug-in fixtures, accent lights).
+      - DO NOT add floor-to-ceiling joinery, built-ins or wall cladding that covers walls. DO NOT change the floor material or the ceiling. DO NOT touch any wall, window, door or opening.
+      - Style ambition must come from furniture, color, art, textiles and lamps — NEVER from structural or built-in changes.
     `,
 	    RENDERER_PROTOCOL: `
 	      VISUAL GENERATION HARD CONSTRAINTS:
 	      1. PRESERVE GEOMETRY: Keep the same room shell, wall positions, floor plan, ceiling, windows, doors, columns, stairs and fixed openings.
 	      2. ANTI-HALLUCINATION: Do not add new windows, doors, arches, balconies, fireplaces, skylights or exterior views where they do not already exist.
-	      3. ALLOWED CHANGES: Change wall colors, wallpaper, paint, removable cladding, lighting fixtures/effects, furniture, textiles, rugs, decor and accessories.
+	      3. ALLOWED CHANGES (DECORATION + ARTIFICIAL LIGHTING ONLY): Change paint/wallpaper color on the EXISTING walls, free-standing furniture, rugs, textiles, wall art, mirrors, plants, decor, and artificial lamps/fixtures. DO NOT add floor-to-ceiling joinery, built-ins or wall cladding that covers walls; DO NOT change the floor material or the ceiling; DO NOT add/move/remove any window, door or opening.
 	      4. CAMERA LOCK: Keep the exact same viewpoint, lens perspective, crop, aspect ratio and camera distance as the input image.
 	      5. DIMENSION LOCK: Keep identical room dimensions and proportions. Do not make the room larger, smaller, wider, deeper, taller, more open or more enclosed.
 	      6. OBJECT PLACEMENT LOCK: New movable furniture and decor must fit inside the existing photographed space without moving walls, windows, doors, fixed counters, fixed closets, plumbing, stairs or columns.
@@ -1199,11 +1199,11 @@ ${proPrompt.trim()}
             contents: { parts: [
               { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
               { inlineData: { mimeType: m[1], data: m[2] } },
-              { text: `IMAGE 1 = the ORIGINAL room. IMAGE 2 = a redecorated version of it. Check ONLY architecture/infrastructure (IGNORE furniture, paint, finishes, decor and lighting fixtures — those are allowed to change). Did IMAGE 2 add, remove, move, resize or alter ANY window, glass, skylight, door, opening, wall, ceiling shape/height, floor structure, column, beam or stair? Did it change room dimensions, proportions, perspective or camera? Adding a window / glass / daylight view where IMAGE 1 shows a SOLID wall is a violation. Respond with ONLY compact JSON, nothing else: {"violation": true|false, "issues": ["short phrase"]}` },
+              { text: `IMAGE 1 = the ORIGINAL room. IMAGE 2 = a redecorated version of the SAME room. Compare ONLY architectural openings — IGNORE furniture, rugs, paint, wall art, mirrors, shelves, TVs and lighting. An OPENING = a window (glazed opening to the exterior) OR a door/passage/archway (a gap in a wall to another space). Count, for EACH image separately: windows, and doors/passages. Then: it is a VIOLATION if the counts differ, OR if any opening was moved, resized, walled-up or added. Respond with ONLY compact JSON, nothing else: {"img1":{"windows":N,"doors":N},"img2":{"windows":N,"doors":N},"violation":true|false}` },
             ] },
           });
           const j = JSON.parse((/\{[\s\S]*\}/.exec(vr?.text || '') || ['{}'])[0]);
-          return { ok: !j.violation, issues: Array.isArray(j.issues) ? j.issues : [] };
+          return { ok: !j.violation, issues: j.violation ? ['opening count/position changed'] : [] };
         } catch { return { ok: true, issues: [] }; }
       };
 
