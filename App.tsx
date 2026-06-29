@@ -1053,7 +1053,7 @@ ${proPrompt.trim()}
         2) WALL LENGTHS (relative): for each visible wall, estimate length as a ratio (e.g., "back wall ≈ 1.0, left wall ≈ 1.4, right wall ≈ 0.6") and describe each by its position (back / left / right / front-right cut / etc).
         3) CEILING: height impression (low / standard / high / double-height) and any visible features (beams, drops, coffers, slopes, skylights). If flat and plain, say so.
         4) FLOOR: visible material and pattern direction.
-        5) WINDOWS: for EACH visible window, report (position on which wall, approximate width, approximate height, sill height, frame style). If none, say "no visible windows".
+        5) WINDOWS: report ONLY real windows — you must clearly see glazing/glass with a frame and/or a view to the exterior. Sheer curtains, drapes, bright or light-colored walls, mirrors, backlit/light panels, TVs, artwork and reflections are NOT windows. When in any doubt, do NOT report a window. For EACH real window, report (position on which wall, approximate width, approximate height, sill height, frame style). If you do not clearly see a real glazed window, you MUST say exactly "no visible windows".
         6) DOORS / OPENINGS: for EACH visible door or opening, report (position, width, height, whether door is present and its style, or just opening). Include closet doors, archways, pass-throughs.
         7) FIXED ARCHITECTURAL ELEMENTS: columns, beams, niches, stairs, fireplaces, built-in shelves, plumbing fixtures (sinks, toilets), kitchen counters/cabinets — list each with its position. Say "none" if absent.
         8) DEPTH / PERSPECTIVE: is the room shallow (camera close to back wall) or deep (long perspective into the room — e.g., corridor)? Estimate the depth ratio (room depth vs width). Mention vanishing point location.
@@ -1142,6 +1142,7 @@ ${proPrompt.trim()}
 		        INPUT IMAGE: This is the IMMUTABLE SHELL and the camera reference.
 		        GEOMETRY WARNING (ABSOLUTE): Keep the EXACT room dimensions, proportions and shape. Every wall, door, window, ceiling edge, column, stair and opening must stay in the SAME position and SAME size. Do not move, resize, add or remove any of them. Keep the same camera angle, lens, perspective, crop and spatial disposition as the original photo.
 		        DO NOT: change the room's size, shape, layout, proportions, perspective or camera; do not move/add/remove walls, windows, doors, openings or change ceiling/floor geometry.
+		        NO NEW WINDOWS (HARDEST RULE — overrides everything below): Look at the input image. Every wall that is solid in the input MUST stay a solid, windowless wall in the output. NEVER add a window, glass, glazing, skylight, glass door or any view to the outside, and NEVER add curtains/drapes/blinds to a windowless wall. Decorate solid walls only with paint, wallpaper, paneling/cladding, art, mirrors, shelving or lighting — never by opening a window. Inventing a window is a critical failure.
 		        DO (within the fixed geometry): freely restyle — repaint, wallpaper, wall paneling/cladding, flooring finish, ceiling finish, lighting (add/upgrade fixtures, track, recessed, LED, ambiance) — and add/replace furniture, rugs, curtains, tables, lamps, art, mirrors, plants and decor. The look can change a lot; the room's geometry cannot.
 
 		        MEASURED GROUND TRUTH OF THIS EXACT ROOM (from architectural survey of the input photo — these are FACTS, every single one must be preserved pixel-for-pixel in the output):
@@ -1151,7 +1152,7 @@ ${proPrompt.trim()}
 
 		        WALL-LENGTH LOCK: The relative wall lengths described in the survey are non-negotiable. Do not stretch or shrink any wall.
 
-		        OPENINGS LOCK: Every window and door listed in the survey must appear in the output at the SAME wall, SAME position along the wall, SAME width and SAME height. Do not add a window or door that isn't in the survey. Do not remove one that is.
+		        OPENINGS LOCK (CRITICAL — anchored to the INPUT IMAGE, not just the survey text): Windows and doors in the output must match the INPUT IMAGE exactly — same wall, same position, same width, same height. ANY wall that is solid/windowless in the input image MUST remain solid and windowless in the output. NEVER add a window, glazing, glass panel, glass door, skylight, balcony or any opening to daylight/exterior. NEVER add curtains, drapes, blinds or sheers to a wall that has no real window in the input. If the survey text and the input image disagree about a window, the INPUT IMAGE always wins — never invent a window the photo does not actually show. Do not enlarge an existing window. Inventing or enlarging a window is the single most serious failure and is absolutely forbidden.
 
 	        NEW DESIGN INSTRUCTION (apply ONLY to surfaces, lighting and movable items — never to geometry):
         ${enhancedDescription}
