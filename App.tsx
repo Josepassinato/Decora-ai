@@ -1171,21 +1171,50 @@ ${proPrompt.trim()}
       // Render: foto do ambiente (shell) + prompt. Os produtos reais entram como
       // DIRETRIZ DE TEXTO (nomes), não como imagem — fotos reais de produto disparam
       // IMAGE_RECITATION no Gemini e bloqueiam a geração. A foto real fica na lista de compras.
-      const result = await generateGeminiContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [
+      // RENDER + VERIFICAÇÃO DE FIDELIDADE: gera, compara input×output e REGENERA se a IA
+      // alterou a infraestrutura (janela/parede/dimensão/perspectiva). Garante o princípio:
+      // arquitetura imutável; só decoração + iluminação artificial mudam. Fail-open (nunca trava).
+      const runRender = async (correction) => {
+        const r = await generateGeminiContent({
+          model: 'gemini-2.5-flash-image',
+          contents: { parts: [
             { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
-            { text: renderPrompt },
-          ],
-        },
-      });
-
-      let imgUrl = null;
-      if (result.candidates?.[0]?.content?.parts) {
-          for (const part of result.candidates[0].content.parts) {
-              if (part.inlineData) imgUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            { text: renderPrompt + (correction || '') },
+          ] },
+        });
+        let url = null;
+        if (r.candidates?.[0]?.content?.parts) {
+          for (const part of r.candidates[0].content.parts) {
+            if (part.inlineData) url = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
           }
+        }
+        return url;
+      };
+      const verifyArchFidelity = async (outUrl) => {
+        const m = /^data:(.*?);base64,(.*)$/.exec(outUrl || '');
+        if (!m) return { ok: true, issues: [] };
+        try {
+          const vr = await generateGeminiContent({
+            model: 'gemini-2.5-flash',
+            contents: { parts: [
+              { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
+              { inlineData: { mimeType: m[1], data: m[2] } },
+              { text: `IMAGE 1 = the ORIGINAL room. IMAGE 2 = a redecorated version of it. Check ONLY architecture/infrastructure (IGNORE furniture, paint, finishes, decor and lighting fixtures — those are allowed to change). Did IMAGE 2 add, remove, move, resize or alter ANY window, glass, skylight, door, opening, wall, ceiling shape/height, floor structure, column, beam or stair? Did it change room dimensions, proportions, perspective or camera? Adding a window / glass / daylight view where IMAGE 1 shows a SOLID wall is a violation. Respond with ONLY compact JSON, nothing else: {"violation": true|false, "issues": ["short phrase"]}` },
+            ] },
+          });
+          const j = JSON.parse((/\{[\s\S]*\}/.exec(vr?.text || '') || ['{}'])[0]);
+          return { ok: !j.violation, issues: Array.isArray(j.issues) ? j.issues : [] };
+        } catch { return { ok: true, issues: [] }; }
+      };
+
+      let imgUrl = await runRender('');
+      const FIDELITY_RETRIES = 2;
+      for (let att = 1; imgUrl && att <= FIDELITY_RETRIES; att++) {
+        setLoadingMessage(lang === 'en' ? 'Checking architectural fidelity…' : lang === 'es' ? 'Verificando fidelidad arquitectónica…' : 'Conferindo a fidelidade da arquitetura…');
+        const v = await verifyArchFidelity(imgUrl);
+        if (v.ok) break;
+        setLoadingMessage(lang === 'en' ? 'Fixing — preserving the original architecture…' : lang === 'es' ? 'Corrigiendo — preservando la arquitectura…' : 'Ajustando — preservando a arquitetura original…');
+        imgUrl = await runRender(`\n\nCORRECTION (your previous attempt VIOLATED architectural fidelity: ${v.issues.join('; ') || 'altered infrastructure'}). Regenerate the SAME decoration and artificial lighting, but keep ALL architecture/infrastructure EXACTLY as the input image — no added or changed windows, glass, doors, openings, walls, dimensions, ceiling, floor or perspective. A solid wall in the input MUST stay a solid wall.`);
       }
 
       if (imgUrl) {
