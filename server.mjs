@@ -31,6 +31,10 @@ const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb:/
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'decore_ai';
 const DEFAULT_CLIENT_ID = 'default';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+// Gemini roteado pelo ai-gateway (:8794): ele dropa a chave que mandamos e injeta a
+// central viva, medindo consumo por projeto. Chave local aqui é irrelevante.
+// Escape hatch: GEMINI_BASE_URL='' + chave válida no .env volta a falar direto com o Google.
+const GEMINI_BASE_URL = process.env.GEMINI_BASE_URL ?? 'http://127.0.0.1:8794/waydecor';
 const SERPAPI_KEY = process.env.SERPAPI_KEY || '';
 // Domínios por loja — pra priorizar resultados da loja escolhida no Google Shopping.
 const PROVIDER_DOMAINS = { wayfair: 'wayfair.com', target: 'target.com', 'home-depot': 'homedepot.com', ikea: 'ikea.com', 'west-elm': 'westelm.com', tokstok: 'tokstok.com.br', koizadikaza: 'koizadikaza.com.br' };
@@ -173,8 +177,13 @@ const storageStatus = async () => {
 };
 
 const getGeminiClient = () => {
-  if (!GEMINI_API_KEY) return null;
-  if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  if (!GEMINI_API_KEY && !GEMINI_BASE_URL) return null;
+  if (!geminiClient) {
+    geminiClient = new GoogleGenAI({
+      apiKey: GEMINI_API_KEY || 'via-gateway',
+      ...(GEMINI_BASE_URL ? { httpOptions: { baseUrl: GEMINI_BASE_URL } } : {}),
+    });
+  }
   return geminiClient;
 };
 
@@ -462,6 +471,12 @@ createServer(async (req, res) => {
       }
 
       try {
+        // [diag] log do pipeline: modelo + nº de imagens (verificador = flash com 2 imgs)
+        try {
+          const _p = (body?.contents && body.contents.parts) ? body.contents.parts : [];
+          const _imgs = Array.isArray(_p) ? _p.filter((x) => x && x.inlineData).length : 0;
+          console.log(`[gemini] ${model} · imgs=${_imgs}`);
+        } catch {}
         const response = await client.models.generateContent({
           model,
           contents: body.contents,
